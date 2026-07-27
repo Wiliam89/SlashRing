@@ -1,0 +1,22 @@
+# Visual Studio
+.vs/
+*.vcxproj.user
+
+# Builds
+Builds/
+Binaries/
+
+# JUCE
+JuceLibraryCode/
+
+# Debug / Release
+*.exe
+*.dll
+*.lib
+*.obj
+*.pdb
+*.ilk
+
+# Sistema
+.DS_Store
+Thumbs.db

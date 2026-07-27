@@ -1,0 +1,37 @@
+A partir desta mensagem, o projeto SlashRing passa oficialmente a utilizar um novo método de desenvolvimento.
+
+Toda a metodologia anterior foi substituída pelo AI Development Protocol v2.
+
+Foram criados os seguintes documentos dentro da pasta ProjectManagement do projeto:
+
+- PRODUCT_SPECIFICATION.md
+- AI_DEVELOPMENT_PROTOCOL_v2.md
+- PROJECT_STATUS.md
+- ROADMAP.md
+- MODULE_STATUS.md
+- CURRENT_SPRINT.md
+- QA_CHECKLIST.md
+- CHANGELOG.md
+
+Antes de qualquer continuação do desenvolvimento, leia esses documentos como fonte oficial do projeto.
+
+A partir de agora:
+
+- O projeto continua sendo um plugin comercial profissional de guitarra baseado na cadeia de sinal clássica do Slash, porém permitindo liberdade total para criação de outros timbres.
+- O desenvolvimento passa a ser organizado por Sprints.
+- ChatGPT assume o papel de Chief Software Architect.
+- Uma IA de código (Cursor AI) será responsável pela implementação.
+- Todo código deverá respeitar integralmente a arquitetura definida nos documentos.
+- Nenhum Sprint será considerado concluído sem auditoria técnica, compilação, atualização da documentação e teste de áudio com guitarra quando aplicável.
+
+Antes de escrever qualquer novo código, faça uma análise completa da situação atual do projeto considerando toda a documentação criada e o histórico técnico deste chat.
+
+Em seguida apresente um resumo contendo:
+
+1. Estado atual do projeto.
+2. Estado de cada módulo.
+3. Arquivos que precisam de auditoria antes do próximo Sprint.
+4. Melhor IA para implementação do código (Cursor ou outra, caso exista justificativa técnica).
+5. Plano detalhado para iniciar oficialmente o Sprint do Overdrive.
+
+Não gere código nesta resposta. Apenas faça a auditoria e o planejamento do próximo Sprint utilizando o novo protocolo.

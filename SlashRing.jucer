@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<JUCERPROJECT id="bMEHXR" name="SlashRing" projectType="audioplug" useAppConfig="0"
+              addUsingNamespaceToJuceHeader="0" jucerFormatVersion="1">
+  <MAINGROUP id="DxuemS" name="SlashRing">
+    <GROUP id="{420E3884-7011-0130-6429-10B2D048A42B}" name="Resources">
+      <FILE id="URd8dm" name="Marshall_Creamback.wav" compile="0" resource="1"
+            file="Resources/Marshall_Creamback.wav"/>
+    </GROUP>
+    <GROUP id="{A56AD2A5-9A4A-ED13-3B24-DF034FF62311}" name="Source">
+      <FILE id="tfPjwI" name="CabinetPhysics.h" compile="0" resource="0"
+            file="Source/CabinetPhysics.h"/>
+      <FILE id="OzpPEo" name="CabinetPhysics.cpp" compile="1" resource="0"
+            file="Source/CabinetPhysics.cpp"/>
+      <FILE id="wZ6OZs" name="CabinetDataTypes.h" compile="0" resource="0"
+            file="Source/CabinetDataTypes.h"/>
+      <FILE id="QdVq4d" name="IRCache.h" compile="0" resource="0" file="Source/IRCache.h"/>
+      <FILE id="Ur4DMC" name="IRCache.cpp" compile="1" resource="0" file="Source/IRCache.cpp"/>
+      <FILE id="O3zbBa" name="SpeakerNonLinearity.h" compile="0" resource="0"
+            file="Source/SpeakerNonLinearity.h"/>
+      <FILE id="QrZ13e" name="SpeakerNonLinearity.cpp" compile="1" resource="0"
+            file="Source/SpeakerNonLinearity.cpp"/>
+      <FILE id="E791Yj" name="CabinetAcoustics.h" compile="0" resource="0"
+            file="Source/CabinetAcoustics.h"/>
+      <FILE id="UXbeiB" name="CabinetAcoustics.cpp" compile="1" resource="0"
+            file="Source/CabinetAcoustics.cpp"/>
+      <FILE id="KrsE3G" name="CabinetConvolution.h" compile="0" resource="0"
+            file="Source/CabinetConvolution.h"/>
+      <FILE id="BUe9fg" name="CabinetConvolution.cpp" compile="1" resource="0"
+            file="Source/CabinetConvolution.cpp"/>
+      <FILE id="qgnC03" name="CabinetEngine.cpp" compile="1" resource="0"
+            file="Source/CabinetEngine.cpp"/>
+      <FILE id="WTGXdF" name="CabinetEngine.h" compile="0" resource="0" file="Source/CabinetEngine.h"/>
+      <FILE id="uwC7YG" name="IRLoader.cpp" compile="1" resource="0" file="Source/IRLoader.cpp"/>
+      <FILE id="vFmZqR" name="IRLoader.h" compile="0" resource="0" file="Source/IRLoader.h"/>
+      <FILE id="lsXM6l" name="CabinetMixer.cpp" compile="1" resource="0"
+            file="Source/CabinetMixer.cpp"/>
+      <FILE id="eXR78u" name="CabinetMixer.h" compile="0" resource="0" file="Source/CabinetMixer.h"/>
+      <FILE id="qG7e5M" name="CabinetVoice.cpp" compile="1" resource="0"
+            file="Source/CabinetVoice.cpp"/>
+      <FILE id="jYAjlA" name="CabinetVoice.h" compile="0" resource="0" file="Source/CabinetVoice.h"/>
+      <FILE id="ErBTBD" name="DelayModule.cpp" compile="1" resource="0" file="Source/DelayModule.cpp"/>
+      <FILE id="R6bRfQ" name="DelayModule.h" compile="0" resource="0" file="Source/DelayModule.h"/>
+      <FILE id="yMXtHG" name="OutputStage.cpp" compile="1" resource="0" file="Source/OutputStage.cpp"/>
+      <FILE id="BGdatS" name="OutputStage.h" compile="0" resource="0" file="Source/OutputStage.h"/>
+      <FILE id="tCyJBQ" name="InputStage.cpp" compile="1" resource="0" file="Source/InputStage.cpp"/>
+      <FILE id="CtfLbR" name="InputStage.h" compile="0" resource="0" file="Source/InputStage.h"/>
+      <FILE id="qmokkc" name="AmpModule.cpp" compile="1" resource="0" file="Source/AmpModule.cpp"/>
+      <FILE id="DiJEBu" name="AmpModule.h" compile="0" resource="0" file="Source/AmpModule.h"/>
+      <FILE id="R8Gd12" name="CabinetModule.cpp" compile="1" resource="0"
+            file="Source/CabinetModule.cpp"/>
+      <FILE id="B0znVZ" name="CabinetModule.h" compile="0" resource="0" file="Source/CabinetModule.h"/>
+      <FILE id="JEppvT" name="OverdriveModule.cpp" compile="1" resource="0"
+            file="Source/OverdriveModule.cpp"/>
+      <FILE id="ImCeOT" name="OverdriveModule.h" compile="0" resource="0"
+            file="Source/OverdriveModule.h"/>
+      <FILE id="fr3xZa" name="ReverbModule.cpp" compile="1" resource="0"
+            file="Source/ReverbModule.cpp"/>
+      <FILE id="NXXl8D" name="ReverbModule.h" compile="0" resource="0" file="Source/ReverbModule.h"/>
+      <FILE id="orQhDV" name="marshall_cab.wav" compile="0" resource="1"
+            file="../../IR/AMP_IR/6505-6L6 PWR AMP/marshall_cab.wav"/>
+      <FILE id="xPJVV4" name="PluginProcessor.cpp" compile="1" resource="0"
+            file="Source/PluginProcessor.cpp"/>
+      <FILE id="HgOrSu" name="PluginProcessor.h" compile="0" resource="0"
+            file="Source/PluginProcessor.h"/>
+      <FILE id="lswULh" name="PluginEditor.cpp" compile="1" resource="0"
+            file="Source/PluginEditor.cpp"/>
+      <FILE id="jqM4mV" name="PluginEditor.h" compile="0" resource="0" file="Source/PluginEditor.h"/>
+    </GROUP>
+  </MAINGROUP>
+  <MODULES>
+    <MODULE id="juce_analytics" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="juce_animation" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="juce_audio_basics" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="juce_audio_devices" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="juce_audio_formats" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="juce_audio_plugin_client" showAllCode="1" useLocalCopy="0"
+            useGlobalPath="0"/>
+    <MODULE id="juce_audio_processors" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="juce_audio_utils" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="juce_box2d" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="juce_core" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="juce_cryptography" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="juce_data_structures" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="juce_dsp" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="juce_events" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="juce_graphics" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="juce_gui_basics" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="juce_gui_extra" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="juce_javascript" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="juce_midi_ci" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="juce_opengl" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="juce_osc" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="juce_product_unlocking" showAllCode="1" useLocalCopy="0"
+            useGlobalPath="0"/>
+    <MODULE id="juce_video" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+  </MODULES>
+  <JUCEOPTIONS JUCE_STRICT_REFCOUNTEDPOINTER="1" JUCE_VST3_CAN_REPLACE_VST2="0"/>
+  <EXPORTFORMATS>
+    <VS2022 targetFolder="Builds/VisualStudio2022">
+      <CONFIGURATIONS>
+        <CONFIGURATION isDebug="1" name="Debug" targetName="SlashRing"/>
+        <CONFIGURATION isDebug="0" name="Release" targetName="SlashRing"/>
+      </CONFIGURATIONS>
+      <MODULEPATHS>
+        <MODULEPATH id="juce_video" path="..\..\JUCE\modules"/>
+        <MODULEPATH id="juce_gui_extra" path="..\..\JUCE\modules"/>
+        <MODULEPATH id="juce_gui_basics" path="..\..\JUCE\modules"/>
+        <MODULEPATH id="juce_graphics" path="..\..\JUCE\modules"/>
+        <MODULEPATH id="juce_events" path="..\..\JUCE\modules"/>
+        <MODULEPATH id="juce_core" path="..\..\JUCE\modules"/>
+        <MODULEPATH id="juce_data_structures" path="..\..\JUCE\modules"/>
+        <MODULEPATH id="juce_product_unlocking" path="..\..\JUCE\modules"/>
+        <MODULEPATH id="juce_cryptography" path="..\..\JUCE\modules"/>
+        <MODULEPATH id="juce_analytics" path="..\..\JUCE\modules"/>
+        <MODULEPATH id="juce_animation" path="..\..\JUCE\modules"/>
+        <MODULEPATH id="juce_audio_basics" path="..\..\JUCE\modules"/>
+        <MODULEPATH id="juce_audio_devices" path="..\..\JUCE\modules"/>
+        <MODULEPATH id="juce_audio_formats" path="..\..\JUCE\modules"/>
+        <MODULEPATH id="juce_audio_plugin_client" path="..\..\JUCE\modules"/>
+        <MODULEPATH id="juce_audio_processors" path="..\..\JUCE\modules"/>
+        <MODULEPATH id="juce_audio_utils" path="..\..\JUCE\modules"/>
+        <MODULEPATH id="juce_box2d" path="..\..\JUCE\modules"/>
+        <MODULEPATH id="juce_dsp" path="..\..\JUCE\modules"/>
+        <MODULEPATH id="juce_javascript" path="..\..\JUCE\modules"/>
+        <MODULEPATH id="juce_midi_ci" path="..\..\JUCE\modules"/>
+        <MODULEPATH id="juce_opengl" path="..\..\JUCE\modules"/>
+        <MODULEPATH id="juce_osc" path="..\..\JUCE\modules"/>
+      </MODULEPATHS>
+    </VS2022>
+  </EXPORTFORMATS>
+</JUCERPROJECT>
