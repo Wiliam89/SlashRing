@@ -460,6 +460,10 @@ void SlashRingAudioProcessor::updateParameterState()
         const auto overdriveLevel =
             apvts.getRawParameterValue(
                 ParameterID::overdriveLevel)->load();
+        
+        const auto overdriveTone =
+            apvts.getRawParameterValue(
+                ParameterID::overdriveTone)->load();
 
         if (overdriveEnabled > 0.5f)
         {
@@ -473,6 +477,7 @@ void SlashRingAudioProcessor::updateParameterState()
         {
             overdriveModule->setDrive(0.0f);
             overdriveModule->setLevel(0.0f);
+            overdriveModule->setTone(overdriveTone);
         }
     }
 
@@ -518,43 +523,45 @@ void SlashRingAudioProcessor::updateParameterState()
    // CABINET
   //========================================================
 
-    if (cabinetModule != nullptr)
-    {
-        const auto enabled =
-            apvts.getRawParameterValue(
-                ParameterID::cabinetOn)->load();
+   if (cabinetModule != nullptr)
+{
+    const auto enabled =
+    apvts.getRawParameterValue(
+    ParameterID::cabinetOn)->load();
 
-        cabinetModule->setEnabled(enabled > 0.5f);
 
-        // CAB-001B: Connect existing architecture — temporary engineering values
-        // These are NOT user parameters. They are internal validation values
-        // to prove the DSP path is functional. Will be replaced by real
-        // parameters in a future task.
-        constexpr float voiceGainDb   = 0.0f;    // 0 dB (unity)
-        constexpr float lowCutHz      = 70.0f;   // 70 Hz high-pass
-        constexpr float highCutHz     = 9000.0f; // 9 kHz low-pass
-        constexpr float delayMs       = 0.0f;    // no micro-delay
-        constexpr float micDist       = 0.5f;    // neutral distance
-        constexpr float micAngle      = 45.0f;   // neutral angle
-        constexpr float cabSize       = 0.5f;    // neutral cabinet size
-        constexpr float openBack      = 0.0f;    // closed back
-        constexpr float speakerDrive  = 0.3f;    // neutral speaker drive
-        constexpr float speakerBreakup= 0.3f;    // neutral speaker breakup
-        constexpr float blend         = 0.0f; // 0.0 = 100% voz A (a que tem a IR)
-        constexpr float pan           = 0.0f;    // center
-        constexpr float width         = 0.0f; // centralizado, sem desbalanceio L/R
-        constexpr float outputGainDb  = 6.0f; // makeup: compensa a lei de pan (~0.5) do mixer
+    const auto lowCut =
+    apvts.getRawParameterValue(
+    ParameterID::cabinetLowCut)->load();
 
-        cabinetModule->configureVoice(0, voiceGainDb, lowCutHz, highCutHz,
-                                      delayMs, micDist, micAngle);
-        cabinetModule->configureVoice(1, voiceGainDb, lowCutHz, highCutHz,
-                                      delayMs, micDist, micAngle);
-        cabinetModule->configurePhysics(0, cabSize, openBack,
-                                        speakerDrive, speakerBreakup);
-        cabinetModule->configurePhysics(1, cabSize, openBack,
-                                        speakerDrive, speakerBreakup);
-        cabinetModule->configureMixer(blend, pan, width, outputGainDb);
-    }
+    const auto highCut =
+    apvts.getRawParameterValue(
+    ParameterID::cabinetHighCut)->load();
+
+    const auto levelDb =
+    apvts.getRawParameterValue(
+    ParameterID::cabinetLevel)->load();
+
+    const auto mix =
+    apvts.getRawParameterValue(
+    ParameterID::cabinetMix)->load();
+    cabinetModule->setEnabled(enabled > 0.5f);
+    // Voz A carrega a IR de fabrica; voz B fica muda
+    // (blend = 0). Low/High cut ajustam o timbre.
+
+    cabinetModule->configureVoice(
+    0, 0.0f, lowCut, highCut, 0.0f, 0.5f, 45.0f);
+    cabinetModule->configureVoice(
+    1, 0.0f, lowCut, highCut, 0.0f, 0.5f, 45.0f);
+    // blend 0 = 100% voz A. O +6 dB compensa a lei de
+    // pan (~0.5) do CabinetMixer, devolvendo o nivel a
+    // unidade. levelDb e o makeup do usuario.
+
+    cabinetModule->configureMixer(
+    0.0f, 0.0f, 0.0f, levelDb + 6.0f);
+    // Dry/wet do cabinet
+    cabinetModule->setMix(mix);
+}
 
     //========================================================
     // DELAY
@@ -849,6 +856,13 @@ SlashRingAudioProcessor::createParameterLayout()
             0.01f),
         0.0f));
 
+    parameters.push_back(std::make_unique<Parameter>(
+        ParameterID::overdriveTone,
+        "Overdrive Tone",
+        juce::NormalisableRange<float>(
+             0.0f, 10.0f, 0.01f),
+             6.0f));
+
     //========================================================
     // CAB / REVERB
     //========================================================
@@ -857,6 +871,34 @@ SlashRingAudioProcessor::createParameterLayout()
         ParameterID::cabinetOn,
         "Cabinet On",
         true));
+
+    parameters.push_back(std::make_unique<Parameter>(
+         ParameterID::cabinetLowCut,
+         "Cabinet Low Cut",
+    juce::NormalisableRange<float>(
+      20.0f, 300.0f, 1.0f, 0.5f),
+      80.0f));
+
+    parameters.push_back(std::make_unique<Parameter>(
+         ParameterID::cabinetHighCut,
+         "Cabinet High Cut",
+    juce::NormalisableRange<float>(
+       2000.0f, 20000.0f, 1.0f, 0.5f),
+       12000.0f));
+
+    parameters.push_back(std::make_unique<Parameter>(
+         ParameterID::cabinetLevel,
+         "Cabinet Level",
+    juce::NormalisableRange<float>(
+       -24.0f, 24.0f, 0.1f),
+        0.0f));
+
+    parameters.push_back(std::make_unique<Parameter>(
+         ParameterID::cabinetMix,
+         "Cabinet Mix",
+    juce::NormalisableRange<float>(
+        0.0f, 1.0f, 0.01f),
+        1.0f));
 
     parameters.push_back(std::make_unique<Toggle>(
         ParameterID::reverbOn,

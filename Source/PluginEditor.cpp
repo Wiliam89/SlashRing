@@ -40,6 +40,7 @@ void SlashRingLookAndFeel::drawRotarySlider (juce::Graphics& g, int x, int y, in
  value.addCentredArc (centre.x, centre.y, arcR, arcR, 0.0f, startAngle, toAngle, true);
  g.setColour (accentColour);
  g.strokePath (value, juce::PathStrokeType (lineW, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
+
  // corpo do knob
  auto knobR = radius * 0.66f;
  juce::Rectangle<float> knob (0.0f, 0.0f, knobR * 2.0f, knobR * 2.0f);
@@ -123,12 +124,11 @@ SlashRingAudioProcessorEditor::SlashRingAudioProcessorEditor (SlashRingAudioProc
  inputTypeBox.addItem ("Humbucker Modern", 4);
  inputTypeBox.addItem ("Active", 5);
  addAndMakeVisible (inputTypeBox);
- cabinetInfo.setText ("IR-BASED", juce::dontSendNotification);
- cabinetInfo.setJustificationType (juce::Justification::centred);
- cabinetInfo.setColour (juce::Label::textColourId, juce::Colour (0xff9A9188));
- addAndMakeVisible (cabinetInfo);
- for (auto* k : { &inputGain, &outputGain, &odDrive, &odLevel, &ampGain, &bass,
- &mid, &treble, &presence, &master, &delayTime, &delayFb, &delayMix, &reverbMix })
+
+// (removido — cabinetInfo substituido pelos knobs)
+
+ for (auto* k : { &inputGain, &outputGain, &odDrive, &odLevel, &odTone, &ampGain, &bass,
+ &mid, &treble, &presence, &master, &cabLowCut, &cabHighCut, &cabLevel, &cabMix, &delayTime, &delayFb, &delayMix, &reverbMix })
  addAndMakeVisible (*k);
  for (auto* btn : { &overdriveButton, &cabinetButton, &delayButton, &reverbButton })
  addAndMakeVisible (*btn);
@@ -140,6 +140,7 @@ SlashRingAudioProcessorEditor::SlashRingAudioProcessorEditor (SlashRingAudioProc
  outputGainAtt = std::make_unique<SliderAtt> (s, ParameterID::outputGain, outputGain.slider);
  odDriveAtt = std::make_unique<SliderAtt> (s, ParameterID::overdriveDrive, odDrive.slider);
  odLevelAtt = std::make_unique<SliderAtt> (s, ParameterID::overdriveLevel, odLevel.slider);
+ odToneAtt = std::make_unique<SliderAtt> (s, ParameterID::overdriveTone, odTone.slider);
  ampGainAtt = std::make_unique<SliderAtt> (s, ParameterID::ampGain, ampGain.slider);
  bassAtt = std::make_unique<SliderAtt> (s, ParameterID::bass, bass.slider);
  midAtt = std::make_unique<SliderAtt> (s, ParameterID::middle, mid.slider);
@@ -150,6 +151,10 @@ SlashRingAudioProcessorEditor::SlashRingAudioProcessorEditor (SlashRingAudioProc
  delayFbAtt = std::make_unique<SliderAtt> (s, ParameterID::delayFeedback, delayFb.slider);
  delayMixAtt = std::make_unique<SliderAtt> (s, ParameterID::delayMix, delayMix.slider);
  reverbMixAtt = std::make_unique<SliderAtt> (s, ParameterID::reverbMix, reverbMix.slider);
+ cabLowCutAtt = std::make_unique<SliderAtt> ( s, ParameterID::cabinetLowCut, cabLowCut.slider);
+ cabHighCutAtt = std::make_unique<SliderAtt> (s, ParameterID::cabinetHighCut, cabHighCut.slider);
+ cabLevelAtt = std::make_unique<SliderAtt> (s, ParameterID::cabinetLevel, cabLevel.slider);
+ cabMixAtt = std::make_unique<SliderAtt> (s, ParameterID::cabinetMix, cabMix.slider);
  overdriveAtt = std::make_unique<ButtonAtt> (s, ParameterID::overdriveOn, overdriveButton);
  cabinetAtt = std::make_unique<ButtonAtt> (s, ParameterID::cabinetOn, cabinetButton);
  delayAtt = std::make_unique<ButtonAtt> (s, ParameterID::delayOn, delayButton);
@@ -220,12 +225,12 @@ void SlashRingAudioProcessorEditor::resized()
  area.removeFromTop (gap);
  auto rowB = area; // resto
  auto inputArea = rowA.removeFromLeft (180); rowA.removeFromLeft (gap);
- auto odArea = rowA.removeFromLeft (220); rowA.removeFromLeft (gap);
+ auto odArea = rowA.removeFromLeft (300); rowA.removeFromLeft (gap);
  auto ampArea = rowA; // resto (o mais largo)
 
  // ---------- LINHA B ----------
- auto cabArea = rowB.removeFromLeft (180); rowB.removeFromLeft (gap);
- auto dlyArea = rowB.removeFromLeft (360); rowB.removeFromLeft (gap);
+ auto cabArea = rowB.removeFromLeft (240); rowB.removeFromLeft (gap);
+ auto dlyArea = rowB.removeFromLeft (300); rowB.removeFromLeft (gap);
  auto revArea = rowB.removeFromLeft (200); rowB.removeFromLeft (gap);
  auto outArea = rowB; // resto
 
@@ -255,9 +260,10 @@ void SlashRingAudioProcessorEditor::resized()
  auto r = inner (odArea);
  overdriveButton.setBounds (r.removeFromTop (28));
  r.removeFromTop (6);
- int kw = r.getWidth() / 2;
+ int kw = r.getWidth() / 3;
  odDrive.setBounds (r.removeFromLeft (kw).reduced (2));
- odLevel.setBounds (r.reduced (2));
+ odLevel.setBounds (r.removeFromLeft (kw).reduced (2));
+ odTone .setBounds (r.reduced (2));
  }
 
  // AMPLIFIER: 6 knobs
@@ -270,12 +276,19 @@ void SlashRingAudioProcessorEditor::resized()
  ks[i]->setBounds (r.removeFromLeft (kw).reduced (3));
  }
 
- // CABINET: toggle + info
+ // CABINET: toggle + 4 knobs (2x2)
  {
- auto r = inner (cabArea);
- cabinetButton.setBounds (r.removeFromTop (28));
- r.removeFromTop (8);
- cabinetInfo.setBounds (r.removeFromTop (24));
+    auto r = inner (cabArea);
+    cabinetButton.setBounds (r.removeFromTop (28));
+    r.removeFromTop (6);
+    auto top = r.removeFromTop (r.getHeight() / 2);
+    auto bot = r;
+    int kwT = top.getWidth() / 2;
+    cabLowCut .setBounds (top.removeFromLeft (kwT).reduced (2));
+    cabHighCut.setBounds (top.reduced (2));
+    int kwB = bot.getWidth() / 2;
+    cabLevel .setBounds (bot.removeFromLeft (kwB).reduced (2));
+    cabMix .setBounds (bot.reduced (2));
  }
 
  // DELAY: toggle + 3 knobs

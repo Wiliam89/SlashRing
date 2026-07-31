@@ -64,15 +64,16 @@ void OverdriveModule::prepare(
     inputHPF.prepare(spec);
     outputLPF.prepare(spec);
 
+
     *inputHPF.state =
-        *juce::dsp::IIR::Coefficients<float>::makeHighPass(
-            sampleRate,
-            80.0f);
+      *juce::dsp::IIR::Coefficients<float>::makeHighPass(
+           sampleRate,
+           250.0f);
 
     *outputLPF.state =
-        *juce::dsp::IIR::Coefficients<float>::makeLowPass(
+       *juce::dsp::IIR::Coefficients<float>::makeLowPass(
             sampleRate,
-            8500.0f);
+            toneHz);
 
      reset();
 }
@@ -158,6 +159,26 @@ void OverdriveModule::setLevel(
 
     levelSmoothed.setTargetValue(
         outputGainLinear);
+}
+
+void OverdriveModule::setTone(
+ float newTone)
+{
+     const float t =
+    juce::jlimit(0.0f, 10.0f, newTone);
+
+    // 0..10 -> 2 kHz .. 8 kHz
+    const float hz =
+    juce::jmap(t, 0.0f, 10.0f, 2000.0f, 8000.0f);
+
+   // So recomputa se mudou (evita alocacao por bloco)
+   if (std::abs(hz - toneHz) < 0.5f)
+    return;
+    toneHz = hz;
+    *outputLPF.state =
+    *juce::dsp::IIR::Coefficients<float>::makeLowPass(
+    currentSampleRate,
+    toneHz);
 }
 
 void OverdriveModule::process(

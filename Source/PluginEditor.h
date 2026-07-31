@@ -51,21 +51,29 @@ private:
  juce::ComboBox inputTypeBox;
  Knob inputGain { "INPUT" };
  Knob outputGain { "OUTPUT" };
+
  juce::ToggleButton overdriveButton { "OVERDRIVE" };
  Knob odDrive { "DRIVE" };
  Knob odLevel { "LEVEL" };
+ Knob odTone  { "TONE" };
  Knob ampGain { "GAIN" };
  Knob bass { "BASS" };
  Knob mid { "MIDDLE" };
  Knob treble { "TREBLE" };
  Knob presence { "PRESENCE" };
  Knob master { "MASTER" };
+
  juce::ToggleButton cabinetButton { "CABINET" };
- juce::Label cabinetInfo;
+ Knob cabLowCut { "LOW CUT" };
+ Knob cabHighCut { "HIGH CUT" };
+ Knob cabLevel { "LEVEL" };
+ Knob cabMix { "MIX" };
+
  juce::ToggleButton delayButton { "DELAY" };
  Knob delayTime { "TIME" };
  Knob delayFb { "FEEDBACK" };
  Knob delayMix { "MIX" };
+
  juce::ToggleButton reverbButton { "REVERB" };
  Knob reverbMix { "MIX" };
 
@@ -76,9 +84,10 @@ private:
  
  std::unique_ptr<ComboAtt> inputTypeAtt;
  std::unique_ptr<SliderAtt> inputGainAtt, outputGainAtt;
- std::unique_ptr<SliderAtt> odDriveAtt, odLevelAtt;
+ std::unique_ptr<SliderAtt> odDriveAtt, odLevelAtt, odToneAtt;
  std::unique_ptr<SliderAtt> ampGainAtt, bassAtt, midAtt, trebleAtt, presenceAtt, masterAtt;
  std::unique_ptr<SliderAtt> delayTimeAtt, delayFbAtt, delayMixAtt, reverbMixAtt;
+ std::unique_ptr<SliderAtt> cabLowCutAtt, cabHighCutAtt, cabLevelAtt, cabMixAtt;
  std::unique_ptr<ButtonAtt> overdriveAtt, cabinetAtt, delayAtt, reverbAtt;
 
  // ---- Paineis das secoes (desenhados no paint) ----

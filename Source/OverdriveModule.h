@@ -44,7 +44,8 @@ public:
     //========================================================
 
     void setDrive(float newDrive);
-    void setLevel(float newLevel);
+    void setLevel(float newLevelDb);
+    void setTone(float newTone);
 
     //========================================================
     // LIFECYCLE (TD-004)
@@ -110,6 +111,9 @@ private:
     float outputGainLinear = 1.0f;
 
     double currentSampleRate = 44100.0;
+
+    // Tone (LPF de saida controlavel) — NOVO
+    float toneHz = 5600.0f;
 
     //========================================================
     // FIXED NONLINEARITY SHAPE (TD-010)

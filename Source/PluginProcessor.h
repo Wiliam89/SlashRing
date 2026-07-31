@@ -32,8 +32,13 @@ namespace ParameterID
     static constexpr auto overdriveOn = "overdrive_on";
     static constexpr auto overdriveDrive = "overdrive_drive";
     static constexpr auto overdriveLevel = "overdrive_level";
+    static constexpr auto overdriveTone = "overdrive_tone";
 
     static constexpr auto cabinetOn = "cabinet_on";
+    static constexpr auto cabinetLowCut = "cabinet_low_cut";
+    static constexpr auto cabinetHighCut = "cabinet_high_cut";
+    static constexpr auto cabinetLevel = "cabinet_level";
+    static constexpr auto cabinetMix = "cabinet_mix";
 
     static constexpr auto reverbOn = "reverb_on";
     static constexpr auto reverbMix = "reverb_mix";
