@@ -1,54 +1,81 @@
 #include "ReverbModule.h"
 
-ReverbModule::ReverbModule()
+
+ReverbModule::ReverbModule() {}
+ReverbModule::~ReverbModule() {}
+
+void ReverbModule::prepare (double sampleRate, int samplesPerBlock, int numChannels)
 {
+ currentSampleRate = sampleRate;
+ juce::dsp::ProcessSpec spec;
+ spec.sampleRate = sampleRate;
+ spec.maximumBlockSize = static_cast<juce::uint32> (samplesPerBlock);
+ spec.numChannels = static_cast<juce::uint32> (numChannels);
+ reverb.reset();
+ reverb.prepare (spec);
+
+
+ juce::dsp::Reverb::Parameters params;
+ params.roomSize = 0.5f;
+ params.damping = 0.5f;
+ params.wetLevel = 1.0f; // 100% wet — o balanco e feito manualmente em process()
+ params.dryLevel = 0.0f;
+ params.width = 1.0f;
+ params.freezeMode = 0.0f;
+ reverb.setParameters (params);
+ sendHighPass.prepare (spec);
+ *sendHighPass.state = *juce::dsp::IIR::Coefficients<float>::makeHighPass (sampleRate, lowCutHz);
+ sendHighPass.reset();
+ preDelay.prepare (spec);
+ preDelay.setMaximumDelayInSamples (static_cast<int> (sampleRate * 0.2) + 1);
+ preDelay.reset();
+ preDelay.setDelay (static_cast<float> ((preDelayMs / 1000.0) * sampleRate));
+ wetBuffer.setSize (numChannels, samplesPerBlock);
 }
 
-ReverbModule::~ReverbModule()
+void ReverbModule::setMix (float newMix)
 {
+ mix = juce::jlimit (0.0f, 1.0f, newMix);
 }
 
-void ReverbModule::prepare(
-    double sampleRate,
-    int samplesPerBlock,
-    int numChannels)
+
+void ReverbModule::process (juce::AudioBuffer<float>& buffer)
 {
-    juce::dsp::ProcessSpec spec;
-    spec.sampleRate = sampleRate;
-    spec.maximumBlockSize =
-        static_cast<juce::uint32>(samplesPerBlock);
-    spec.numChannels =
-        static_cast<juce::uint32>(numChannels);
+ juce::ScopedNoDenormals noDenormals;
+ const int numChannels = buffer.getNumChannels();
+ const int numSamples = buffer.getNumSamples();
 
-    reverb.reset();
-    reverb.prepare(spec);
+ // Copia seca -> envio (wet)
+ for (int ch = 0; ch < numChannels; ++ch)
+ wetBuffer.copyFrom (ch, 0, buffer, ch, 0, numSamples);
+ juce::dsp::AudioBlock<float> wetBlock (wetBuffer);
+ auto wetSub = wetBlock.getSubBlock (0, static_cast<size_t> (numSamples));
 
-    juce::dsp::Reverb::Parameters params;
-    params.roomSize = 0.45f;
-    params.damping = 0.50f;
-    params.wetLevel = mix;
-    params.dryLevel = 1.0f;
-    params.width = 1.0f;
-    params.freezeMode = 0.0f;
+ // Low-cut no envio (mantem o grave seco)
+ { juce::dsp::ProcessContextReplacing<float> ctx (wetSub); sendHighPass.process (ctx); }
 
-    reverb.setParameters(params);
-}
+ // Pre-delay
+ for (int ch = 0; ch < numChannels; ++ch)
+ {
 
-void ReverbModule::setMix(float newMix)
-{
-    mix = juce::jlimit(0.0f, 1.0f, newMix);
+ float* w = wetBuffer.getWritePointer (ch);
+ for (int s = 0; s < numSamples; ++s)
+ {
+ preDelay.pushSample (ch, w[s]);
+ w[s] = preDelay.popSample (ch);
+ }
 
-    auto params = reverb.getParameters();
-    params.wetLevel = mix;
+ }
 
-    reverb.setParameters(params);
-}
+ // Reverb 100% wet
+ { juce::dsp::ProcessContextReplacing<float> ctx (wetSub); reverb.process (ctx); }
+ // Mix dry / wet
 
-void ReverbModule::process(
-    juce::AudioBuffer<float>& buffer)
-{
-    juce::dsp::AudioBlock<float> block(buffer);
-    juce::dsp::ProcessContextReplacing<float> context(block);
-
-    reverb.process(context);
+ for (int ch = 0; ch < numChannels; ++ch)
+ {
+     float* dry = buffer.getWritePointer (ch);
+     const float* wet = wetBuffer.getReadPointer (ch);
+     for (int s = 0; s < numSamples; ++s)
+     dry[s] = dry[s] * (1.0f - mix) + wet[s] * mix;
+   }
 }

@@ -1,0 +1,45 @@
+                                                               ESPECIFICÇÃO DE CABINET 
+
+
+ Trate os valores como pontos de partida calibráveis, não como verdade absoluta (cada IR real varia).
+
+
+
+Especificação — Cabinet por IR (timbre Slash)
+
+Referência: IR de Marshall 1960 4x12 com Celestion Vintage 30, microfonado com SM57 próximo (borda do cone, levemente fora de eixo). Se a IR já instalada não tiver esse caráter, troque o arquivo — o timbre vem da IR, não do código.
+
+Posição na cadeia: após toda a distorção (OD boost → preamp → power amp → cabinet) e antes de reverb/delay.
+
+1. Implementação (concreta, JUCE)
+
+Use juce::dsp::Convolution — ela já resolve o que costuma dar errado num cabinet caseiro. Configuração:
+
+loadImpulseResponse(...) com:
+Normalise::yes → normaliza o nível da IR (evita a queda de volume que dá a falsa sensação de "cab matou o som").
+Trim::yes → remove silêncio inicial/final.
+size = 0 (usa a IR inteira) ou trunque conforme item 3.
+canais: mono se a IR é de um microfone só (caso típico).
+A classe reamostra a IR automaticamente pro sample rate do host — mas só se você chamar prepareToPlay/prepare corretamente e recarregar em mudança de SR.
+2. Parâmetros (faixa e unidade)
+IR select (enum) — qual arquivo carregar, se houver mais de um.
+Low cut (HPF) pós-IR: 40–150 Hz, default 80 Hz (limpa o sub-grave; gentil, 12 dB/oct).
+High cut (LPF) pós-IR: 4–8 kHz, default desligado ou 8 kHz — a IR já tem o rolloff natural; só use se ainda houver fizz. Cortar cedo demais aqui é o que mata o overdrive.
+Output / makeup gain: −24 a +24 dB, ajustado pra unidade com o bypass.
+Mix: 0–100%, default 100%.
+3. Processamento da IR (valores)
+Comprimento útil: 1024–2048 samples (~21–43 ms @ 48 kHz) já captura tudo de um cab de guitarra. Se a IR for maior, pode truncar com fade nos últimos 10–20% (meia-janela de Hann) pra não gerar clique — mas se usar Trim::yes + IR curta, nem precisa.
+Convolução: partitioned (a juce::dsp::Convolution faz por padrão). Reporte a latência ao host via setLatencySamples(getLatency()).
+4. Cuidados (é aqui que se resolve o "matar o som")
+Nível: mesmo com Normalise, ajuste o makeup gain e compare em volume igualado com o bypass. Grande parte da sensação de "morreu" é só queda de volume.
+LPF pós-IR conservador: não escureça pra "domar" — se tem fizz, ele vem do OD/amp. Resolva lá com oversampling 4x–8x, deixando o cab aberto.
+Sample rate: recarregue/reamostre a IR e recompute os filtros no prepareToPlay e em qualquer mudança de SR. IR carregada num SR e tocada em outro = timbre e afinação errados.
+Delay/reverb depois do cab (você já corrigiu) — se ficarem antes, a IR abafa os ecos.
+Denormals: flush-to-zero (FTZ/DAZ) nos filtros de trim.
+5. Como testar
+Varredura log / ruído branco pela cadeia → confira no espectro: rolloff abaixo de ~80 Hz, picos naturais em ~2 e ~4 kHz, queda íngreme acima de ~6 kHz.
+A/B em volume igualado contra a mesma IR carregada no Ignite Amps NadIR (IR loader grátis) — se soarem diferentes, o problema está no seu processamento (nível, resample, trim), não na IR.
+Teste em 44,1 / 48 / 96 kHz e confirme que a afinação/timbre não muda com o SR (prova de que o resample está certo).
+Como é substituição, faça um teste de regressão: mesma interface, sem cliques, sem estouro de CPU. 
+
+Detalhe honesto: como a IR já está instalada, é bem provável que seu problema original não fosse a IR em si, e sim falta de makeup gain, LPF agressivo demais, ou o delay antes do cab. Comece verificando esses três — o teste A/B contra o NadIR aponta rapidinho onde está.

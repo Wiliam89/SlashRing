@@ -540,10 +540,10 @@ void SlashRingAudioProcessor::updateParameterState()
         constexpr float openBack      = 0.0f;    // closed back
         constexpr float speakerDrive  = 0.3f;    // neutral speaker drive
         constexpr float speakerBreakup= 0.3f;    // neutral speaker breakup
-        constexpr float blend         = 1.0f;    // 100% blend (voice A only)
+        constexpr float blend         = 0.0f; // 0.0 = 100% voz A (a que tem a IR)
         constexpr float pan           = 0.0f;    // center
-        constexpr float width         = 0.5f;    // default width
-        constexpr float outputGainDb  = 0.0f;    // 0 dB (unity)
+        constexpr float width         = 0.0f; // centralizado, sem desbalanceio L/R
+        constexpr float outputGainDb  = 6.0f; // makeup: compensa a lei de pan (~0.5) do mixer
 
         cabinetModule->configureVoice(0, voiceGainDb, lowCutHz, highCutHz,
                                       delayMs, micDist, micAngle);

@@ -8,29 +8,14 @@
             file="Resources/Marshall_Creamback.wav"/>
     </GROUP>
     <GROUP id="{A56AD2A5-9A4A-ED13-3B24-DF034FF62311}" name="Source">
-      <FILE id="tfPjwI" name="CabinetPhysics.h" compile="0" resource="0"
-            file="Source/CabinetPhysics.h"/>
-      <FILE id="OzpPEo" name="CabinetPhysics.cpp" compile="1" resource="0"
-            file="Source/CabinetPhysics.cpp"/>
       <FILE id="wZ6OZs" name="CabinetDataTypes.h" compile="0" resource="0"
             file="Source/CabinetDataTypes.h"/>
       <FILE id="QdVq4d" name="IRCache.h" compile="0" resource="0" file="Source/IRCache.h"/>
       <FILE id="Ur4DMC" name="IRCache.cpp" compile="1" resource="0" file="Source/IRCache.cpp"/>
-      <FILE id="O3zbBa" name="SpeakerNonLinearity.h" compile="0" resource="0"
-            file="Source/SpeakerNonLinearity.h"/>
-      <FILE id="QrZ13e" name="SpeakerNonLinearity.cpp" compile="1" resource="0"
-            file="Source/SpeakerNonLinearity.cpp"/>
-      <FILE id="E791Yj" name="CabinetAcoustics.h" compile="0" resource="0"
-            file="Source/CabinetAcoustics.h"/>
-      <FILE id="UXbeiB" name="CabinetAcoustics.cpp" compile="1" resource="0"
-            file="Source/CabinetAcoustics.cpp"/>
       <FILE id="KrsE3G" name="CabinetConvolution.h" compile="0" resource="0"
             file="Source/CabinetConvolution.h"/>
       <FILE id="BUe9fg" name="CabinetConvolution.cpp" compile="1" resource="0"
             file="Source/CabinetConvolution.cpp"/>
-      <FILE id="qgnC03" name="CabinetEngine.cpp" compile="1" resource="0"
-            file="Source/CabinetEngine.cpp"/>
-      <FILE id="WTGXdF" name="CabinetEngine.h" compile="0" resource="0" file="Source/CabinetEngine.h"/>
       <FILE id="uwC7YG" name="IRLoader.cpp" compile="1" resource="0" file="Source/IRLoader.cpp"/>
       <FILE id="vFmZqR" name="IRLoader.h" compile="0" resource="0" file="Source/IRLoader.h"/>
       <FILE id="lsXM6l" name="CabinetMixer.cpp" compile="1" resource="0"
