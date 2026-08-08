@@ -3,11 +3,24 @@
 *.vcxproj.user
 
 # Builds
-Builds/
 Binaries/
+Builds/**/*.tlog/
+Builds/**/*.obj
+Builds/**/*.pdb
+Builds/**/*.ilk
+Builds/**/*.recipe
+Builds/**/*.lastbuildstate
+Builds/**/*.FileListAbsolute.txt
+Builds/**/*.res
+Builds/**/*.lib
+Builds/**/*.exp
+Builds/**/*.exe
+Builds/**/*.dll
+Builds/**/*.vst3
 
 # JUCE
-JuceLibraryCode/
+# JuceLibraryCode será versionado
+
 
 # Debug / Release
 *.exe
