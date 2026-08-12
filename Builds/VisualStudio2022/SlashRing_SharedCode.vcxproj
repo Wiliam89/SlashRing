@@ -4840,6 +4840,10 @@
     <ClInclude Include="..\..\JuceLibraryCode\JucePluginDefines.h"/>
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\..\Resources\BD_CL_Telocastme.wav"/>
+    <None Include="..\..\Resources\BD_HV_Creamback3_mixed.wav"/>
+    <None Include="..\..\Resources\BD_LD_HairApparently.wav"/>
+    <None Include="..\..\Resources\BD_RH_GatesOfHell.wav"/>
     <None Include="..\..\Resources\Marshall_Creamback.wav"/>
     <None Include="..\..\..\..\IR\AMP_IR\6505-6L6 PWR AMP\marshall_cab.wav"/>
     <None Include="..\..\..\..\JUCE\modules\juce_audio_devices\native\oboe\src\common\README.md"/>

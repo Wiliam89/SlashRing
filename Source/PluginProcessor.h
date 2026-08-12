@@ -35,6 +35,7 @@ namespace ParameterID
     static constexpr auto overdriveTone = "overdrive_tone";
 
     static constexpr auto cabinetOn = "cabinet_on";
+    static constexpr auto cabinetModel = "cabinet_model";   // NOVO: menu de cabinets
     static constexpr auto cabinetLowCut = "cabinet_low_cut";
     static constexpr auto cabinetHighCut = "cabinet_high_cut";
     static constexpr auto cabinetLevel = "cabinet_level";
@@ -52,10 +53,20 @@ namespace ParameterID
 }
 
 //============================================================
+// NUMERO DE CABINETS NO MENU
+// Mude aqui se quiser mais/menos slots. Precisa bater com a
+// lista de nomes (createParameterLayout), com a tabela de IRs
+// (loadCabinetIR) e com o ComboBox do editor.
+//============================================================
+static constexpr int kNumCabinets = 6;
+
+//============================================================
 // MAIN PROCESSOR
 //============================================================
 
-class SlashRingAudioProcessor final : public juce::AudioProcessor
+class SlashRingAudioProcessor final : public juce::AudioProcessor,
+                                      private juce::AudioProcessorValueTreeState::Listener,
+                                      private juce::AsyncUpdater
 {
 public:
     //========================================================
@@ -131,6 +142,23 @@ private:
     juce::AudioProcessorValueTreeState apvts;
 
     //========================================================
+    // MENU DE CABINETS (troca de IR)
+    //
+    // A troca NUNCA e feita na thread de audio. Um listener de
+    // parametro anota o cabinet desejado e acorda o AsyncUpdater;
+    // o carregamento real acontece em handleAsyncUpdate() (thread
+    // de mensagens), que e o unico lugar seguro para chamar o
+    // carregador de IR (ele usa lock + ThreadPool).
+    //========================================================
+
+    void parameterChanged(const juce::String& parameterID, float newValue) override;
+    void handleAsyncUpdate() override;
+    void loadCabinetIR(int modelIndex);
+
+    std::atomic<int> desiredCabinetModel { 0 };
+    int loadedCabinetModel = -1;
+
+    //========================================================
     // DSP MODULE OWNERSHIP
     //========================================================
 
@@ -144,28 +172,23 @@ private:
 
     //========================================================
     // GLOBAL ENGINE SYSTEMS
+    //
+    // Oversampling JUCE: construtor (numCanais, factor, tipo).
+    //   1o valor = 2  -> 2 canais (estereo)
+    //   2o valor = 2  -> factor 2 => taxa 2^2 = 4x
+    // Ou seja, o plugin JA roda em 4x oversampling. Para 8x
+    // (menos aliasing, mais CPU) troque o 2o valor por 3.
     //========================================================
 
     juce::dsp::Oversampling<float> oversampling
     {
         2,
-        2,
+        3,
         juce::dsp::Oversampling<float>::filterHalfBandPolyphaseIIR
     };
 
     double currentSampleRate = 44100.0;
     int currentBlockSize = 512;
-
-    //========================================================
-    // TD-010 GAIN MAP B — TEMPORARY DIAGNOSTIC
-    //
-    // Log-throttle accumulator only. Not read by, or
-    // exposed to, any DSP module. Used exclusively to
-    // limit diagnostic log writes to ~2 lines/sec so the
-    // log file stays readable during manual test-matrix
-    // execution. Remove after TD-010 audit concludes.
-    //========================================================
-    double td010DiagAccumSamples = 0.0;
 
     //========================================================
     // INTERNAL HELPERS

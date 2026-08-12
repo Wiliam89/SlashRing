@@ -8837,6 +8837,18 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\..\Resources\BD_CL_Telocastme.wav">
+      <Filter>SlashRing\Resources</Filter>
+    </None>
+    <None Include="..\..\Resources\BD_HV_Creamback3_mixed.wav">
+      <Filter>SlashRing\Resources</Filter>
+    </None>
+    <None Include="..\..\Resources\BD_LD_HairApparently.wav">
+      <Filter>SlashRing\Resources</Filter>
+    </None>
+    <None Include="..\..\Resources\BD_RH_GatesOfHell.wav">
+      <Filter>SlashRing\Resources</Filter>
+    </None>
     <None Include="..\..\Resources\Marshall_Creamback.wav">
       <Filter>SlashRing\Resources</Filter>
     </None>

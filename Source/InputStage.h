@@ -39,6 +39,11 @@ private:
         juce::dsp::IIR::Coefficients<float>
     > highPassFilter;
 
+    juce::dsp::ProcessorDuplicator<
+        juce::dsp::IIR::Filter<float>,
+        juce::dsp::IIR::Coefficients<float>
+    > voicingFilter;
+
     //========================================================
     // STATE
     //========================================================
@@ -67,6 +72,7 @@ private:
 
     float applyInputVoicing(float x) noexcept;
     float getPickupCalibration() const noexcept;
+    void updateVoicingFilter();
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(InputStage)
 };

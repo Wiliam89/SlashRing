@@ -125,7 +125,15 @@ SlashRingAudioProcessorEditor::SlashRingAudioProcessorEditor (SlashRingAudioProc
  inputTypeBox.addItem ("Active", 5);
  addAndMakeVisible (inputTypeBox);
 
-// (removido — cabinetInfo substituido pelos knobs)
+ // Menu de cabinets (IDs 1..6 = indices 0..5 do parametro cabinet_model).
+ // A ORDEM E OS NOMES precisam bater com a lista em createParameterLayout().
+ cabinetModelBox.addItem ("BD_CL_Telocastme", 1);
+ cabinetModelBox.addItem ("Marshall Cab", 2);
+ cabinetModelBox.addItem ("BD_HV_Creamback3_mixed", 3);
+ cabinetModelBox.addItem ("BD_LD_HairApparently", 4);
+ cabinetModelBox.addItem ("BD_RH_GatesOfHell", 5);
+ cabinetModelBox.addItem ("Cab 6", 6);
+ addAndMakeVisible (cabinetModelBox);
 
  for (auto* k : { &inputGain, &outputGain, &odDrive, &odLevel, &odTone, &ampGain, &bass,
  &mid, &treble, &presence, &master, &cabLowCut, &cabHighCut, &cabLevel, &cabMix, &delayTime, &delayFb, &delayMix, &reverbMix })
@@ -136,6 +144,7 @@ SlashRingAudioProcessorEditor::SlashRingAudioProcessorEditor (SlashRingAudioProc
  // Attachments
  auto& s = processor.getAPVTS();
  inputTypeAtt = std::make_unique<ComboAtt> (s, ParameterID::inputType, inputTypeBox);
+ cabinetModelAtt = std::make_unique<ComboAtt> (s, ParameterID::cabinetModel, cabinetModelBox);
  inputGainAtt = std::make_unique<SliderAtt> (s, ParameterID::inputGain, inputGain.slider);
  outputGainAtt = std::make_unique<SliderAtt> (s, ParameterID::outputGain, outputGain.slider);
  odDriveAtt = std::make_unique<SliderAtt> (s, ParameterID::overdriveDrive, odDrive.slider);
@@ -276,10 +285,12 @@ void SlashRingAudioProcessorEditor::resized()
  ks[i]->setBounds (r.removeFromLeft (kw).reduced (3));
  }
 
- // CABINET: toggle + 4 knobs (2x2)
+ // CABINET: toggle + menu + 4 knobs (2x2)
  {
     auto r = inner (cabArea);
     cabinetButton.setBounds (r.removeFromTop (28));
+    r.removeFromTop (6);
+    cabinetModelBox.setBounds (r.removeFromTop (24));   // NOVO: menu de cabinets
     r.removeFromTop (6);
     auto top = r.removeFromTop (r.getHeight() / 2);
     auto bot = r;

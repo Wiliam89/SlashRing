@@ -8,6 +8,18 @@
 
 namespace BinaryData
 {
+    extern const char*   BD_CL_Telocastme_wav;
+    const int            BD_CL_Telocastme_wavSize = 60020;
+
+    extern const char*   BD_HV_Creamback3_mixed_wav;
+    const int            BD_HV_Creamback3_mixed_wavSize = 54804;
+
+    extern const char*   BD_LD_HairApparently_wav;
+    const int            BD_LD_HairApparently_wavSize = 42911;
+
+    extern const char*   BD_RH_GatesOfHell_wav;
+    const int            BD_RH_GatesOfHell_wavSize = 41147;
+
     extern const char*   Marshall_Creamback_wav;
     const int            Marshall_Creamback_wavSize = 54804;
 
@@ -15,7 +27,7 @@ namespace BinaryData
     const int            marshall_cab_wavSize = 17784;
 
     // Number of elements in the namedResourceList and originalFileNames arrays.
-    const int namedResourceListSize = 2;
+    const int namedResourceListSize = 6;
 
     // Points to the start of a list of resource names.
     extern const char* namedResourceList[];

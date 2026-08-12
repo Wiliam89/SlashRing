@@ -4,6 +4,14 @@
               addUsingNamespaceToJuceHeader="0" jucerFormatVersion="1">
   <MAINGROUP id="DxuemS" name="SlashRing">
     <GROUP id="{420E3884-7011-0130-6429-10B2D048A42B}" name="Resources">
+      <FILE id="wImp43" name="BD_CL_Telocastme.wav" compile="0" resource="1"
+            file="Resources/BD_CL_Telocastme.wav"/>
+      <FILE id="rg1tzK" name="BD_HV_Creamback3_mixed.wav" compile="0" resource="1"
+            file="Resources/BD_HV_Creamback3_mixed.wav"/>
+      <FILE id="CXFIbR" name="BD_LD_HairApparently.wav" compile="0" resource="1"
+            file="Resources/BD_LD_HairApparently.wav"/>
+      <FILE id="NRe6Gr" name="BD_RH_GatesOfHell.wav" compile="0" resource="1"
+            file="Resources/BD_RH_GatesOfHell.wav"/>
       <FILE id="URd8dm" name="Marshall_Creamback.wav" compile="0" resource="1"
             file="Resources/Marshall_Creamback.wav"/>
     </GROUP>

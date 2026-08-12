@@ -10,97 +10,6 @@
 #include "BinaryData.h"
 
 //============================================================
-// TD-010 GAIN MAP B — TEMPORARY DIAGNOSTIC HELPERS
-//
-// Observational only. Never write to, resample, or
-// otherwise modify the buffers/blocks they read. INPUT is
-// read at base sample rate; OD and AMP are read in the
-// oversampled domain, exactly as they exist at their
-// respective tap points — no domain equalization is
-// performed.
-//
-// Remove this entire anonymous namespace after the TD-010
-// audit concludes.
-//============================================================
-
-namespace
-{
-    void td010ComputeRmsPeakDb(
-        const juce::AudioBuffer<float>& buffer,
-        float& rmsDb,
-        float& peakDb)
-    {
-        float peak = 0.0f;
-        double sumSquares = 0.0;
-        juce::int64 total = 0;
-
-        for (int ch = 0; ch < buffer.getNumChannels(); ++ch)
-        {
-            const auto* data = buffer.getReadPointer(ch);
-
-            for (int i = 0; i < buffer.getNumSamples(); ++i)
-            {
-                const float s = data[i];
-                peak = juce::jmax(peak, std::abs(s));
-                sumSquares += static_cast<double>(s) * static_cast<double>(s);
-                ++total;
-            }
-        }
-
-        const float rms =
-            (total > 0)
-            ? static_cast<float>(std::sqrt(sumSquares / static_cast<double>(total)))
-            : 0.0f;
-
-        rmsDb = juce::Decibels::gainToDecibels(rms, -120.0f);
-        peakDb = juce::Decibels::gainToDecibels(peak, -120.0f);
-    }
-
-    void td010ComputeRmsPeakDb(
-        const juce::dsp::AudioBlock<float>& block,
-        float& rmsDb,
-        float& peakDb)
-    {
-        float peak = 0.0f;
-        double sumSquares = 0.0;
-        juce::int64 total = 0;
-
-        const auto numChannels = block.getNumChannels();
-        const auto numSamples = block.getNumSamples();
-
-        for (size_t ch = 0; ch < numChannels; ++ch)
-        {
-            const auto* data = block.getChannelPointer(ch);
-
-            for (size_t i = 0; i < numSamples; ++i)
-            {
-                const float s = data[i];
-                peak = juce::jmax(peak, std::abs(s));
-                sumSquares += static_cast<double>(s) * static_cast<double>(s);
-                ++total;
-            }
-        }
-
-        const float rms =
-            (total > 0)
-            ? static_cast<float>(std::sqrt(sumSquares / static_cast<double>(total)))
-            : 0.0f;
-
-        rmsDb = juce::Decibels::gainToDecibels(rms, -120.0f);
-        peakDb = juce::Decibels::gainToDecibels(peak, -120.0f);
-    }
-
-    void td010AppendDiagLogLine(const juce::String& line)
-    {
-        auto file =
-            juce::File::getSpecialLocation(juce::File::userDocumentsDirectory)
-            .getChildFile("SlashRing_TD010_GainMapB.log");
-
-        file.appendText(line + "\n", false, false, "\n");
-    }
-}
-
-//============================================================
 // CONSTRUCTOR
 //============================================================
 
@@ -125,9 +34,18 @@ SlashRingAudioProcessor::SlashRingAudioProcessor()
     delayModule = std::make_unique<DelayModule>();
     reverbModule = std::make_unique<ReverbModule>();
     outputStage = std::make_unique<OutputStage>();
+
+    // Menu de cabinets: ouvir mudancas do parametro cabinet_model.
+    // Quando o usuario troca de cabinet, agendamos o carregamento
+    // do IR fora da thread de audio (ver handleAsyncUpdate()).
+    apvts.addParameterListener(ParameterID::cabinetModel, this);
 }
 
-SlashRingAudioProcessor::~SlashRingAudioProcessor() = default;
+SlashRingAudioProcessor::~SlashRingAudioProcessor()
+{
+    apvts.removeParameterListener(ParameterID::cabinetModel, this);
+    cancelPendingUpdate();
+}
 
 //============================================================
 // PREPARE
@@ -162,11 +80,6 @@ void SlashRingAudioProcessor::prepareDSP(double sampleRate, int samplesPerBlock)
 
     //========================================================
     // TD-002: BASE-RATE DOMAIN
-    //
-    // InputStage, CabinetModule, DelayModule, ReverbModule
-    // and OutputStage run outside the oversampling region
-    // per ARCHITECTURE.md and must be prepared with the
-    // host's actual sample rate and block size.
     //========================================================
 
     juce::dsp::ProcessSpec baseSpec;
@@ -178,10 +91,6 @@ void SlashRingAudioProcessor::prepareDSP(double sampleRate, int samplesPerBlock)
 
     //========================================================
     // TD-002: OVERSAMPLED DOMAIN
-    //
-    // OverdriveModule and AmpModule run inside the
-    // oversampling region and must be prepared with the
-    // oversampled rate and block size.
     //========================================================
 
     juce::dsp::ProcessSpec oversampledSpec;
@@ -226,15 +135,17 @@ void SlashRingAudioProcessor::prepareBaseRateModules(
         static_cast<int>(baseSpec.numChannels));
 
     //==========================================
-    // Factory IR
+    // Cabinet inicial (menu): carrega o IR do cabinet
+    // atualmente selecionado no parametro.
     //==========================================
 
-    cabinetModule->triggerAsyncFactoryIRLoad(
-       0,
-       BinaryData::Marshall_Creamback_wav,
-       BinaryData::Marshall_Creamback_wavSize,
-       "marshall_creamback_factory"
-    );
+    const int startModel =
+        static_cast<int>(
+            apvts.getRawParameterValue(ParameterID::cabinetModel)->load());
+
+    desiredCabinetModel.store(startModel);
+    loadedCabinetModel = startModel;
+    loadCabinetIR(startModel);
 }
 
 void SlashRingAudioProcessor::prepareOversampledModules(
@@ -249,6 +160,78 @@ void SlashRingAudioProcessor::prepareOversampledModules(
         oversampledSpec.sampleRate,
         static_cast<int>(oversampledSpec.maximumBlockSize),
         static_cast<int>(oversampledSpec.numChannels));
+}
+
+//============================================================
+// MENU DE CABINETS - CARREGAMENTO DE IR (thread de mensagens)
+//============================================================
+
+void SlashRingAudioProcessor::parameterChanged(
+    const juce::String& parameterID,
+    float newValue)
+{
+    // Pode ser chamado ate pela thread de audio (automacao do host),
+    // entao aqui fazemos SO o minimo e seguro: anotar o desejo e
+    // acordar o AsyncUpdater. O trabalho pesado vai para a thread
+    // de mensagens em handleAsyncUpdate().
+    if (parameterID == ParameterID::cabinetModel)
+    {
+        desiredCabinetModel.store(static_cast<int>(newValue));
+        triggerAsyncUpdate();
+    }
+}
+
+void SlashRingAudioProcessor::handleAsyncUpdate()
+{
+    // Roda na thread de mensagens. Aqui e seguro chamar o
+    // carregador de IR (ele usa lock + ThreadPool internamente).
+    const int want = desiredCabinetModel.load();
+
+    if (want != loadedCabinetModel)
+    {
+        loadCabinetIR(want);
+        loadedCabinetModel = want;
+    }
+}
+
+void SlashRingAudioProcessor::loadCabinetIR(int modelIndex)
+{
+    if (cabinetModule == nullptr)
+        return;
+
+    //========================================================
+    // TABELA DE CABINETS
+    //
+    // >>> COMO ADICIONAR SEUS IRs (ver PDF): <<<
+    // 1) Adicione o WAV no Projucer como "Binary Resource".
+    // 2) O Projucer cria um simbolo em BinaryData, ex.:
+    //    BinaryData::MeuIR_wav e BinaryData::MeuIR_wavSize.
+    // 3) Troque, no slot desejado abaixo, os dois BinaryData::...
+    //    pelo seu IR e mude o texto do hash (precisa ser UNICO).
+    //
+    // Hoje os slots 3..6 apontam para o Creamback so para o
+    // projeto COMPILAR de imediato. Troque cada um pelo seu IR.
+    //========================================================
+
+    struct CabIR { const char* data; int size; const char* hash; };
+
+    static const CabIR table[kNumCabinets] =
+    {
+        { BinaryData::BD_CL_Telocastme_wav, BinaryData::BD_CL_Telocastme_wavSize, "cab0_BD_CL_Telocastme"    }, // Slot 1
+        { BinaryData::marshall_cab_wav,       BinaryData::marshall_cab_wavSize,        "cab1_marshallcab" }, // Slot 2
+        { BinaryData::BD_HV_Creamback3_mixed_wav, BinaryData::BD_HV_Creamback3_mixed_wavSize,  "cab2_BD_HV_Creamback3"}, // Slot 3
+        { BinaryData::BD_LD_HairApparently_wav, BinaryData::BD_LD_HairApparently_wavSize, "cab3_BD_LD_HairApparently"}, // Slot 4  <- troque
+        { BinaryData::BD_RH_GatesOfHell_wav, BinaryData::BD_RH_GatesOfHell_wavSize, "cab4_BD_RH_GatesOfHell"       }, // Slot 5  <- troque
+        { BinaryData::Marshall_Creamback_wav, BinaryData::Marshall_Creamback_wavSize, "cab5_troque"       }, // Slot 6  <- troque
+    };
+
+    const int idx = juce::jlimit(0, kNumCabinets - 1, modelIndex);
+
+    cabinetModule->triggerAsyncFactoryIRLoad(
+        0,
+        table[idx].data,
+        static_cast<size_t>(table[idx].size),
+        table[idx].hash);
 }
 
 //============================================================
@@ -274,34 +257,17 @@ void SlashRingAudioProcessor::processBlock(
     updateParameterState();
 
     //========================================================
-   // DSP CHAIN (TD-001)
-  //========================================================
-     //
-     // Official signal flow per ARCHITECTURE.md:
-     //
-     // Input -> InputStage -> Oversampling Engine -> Overdrive
-     // -> Amp -> Downsampling -> Cabinet -> Delay -> Reverb
-     // -> OutputStage -> Host Output
-     //
-     // InputStage runs at base rate BEFORE upsampling.
-     // OverdriveModule and AmpModule run on the actual
-     // oversampled AudioBlock produced by processSamplesUp().
-     // Cabinet, Delay, Reverb and OutputStage run at base
-     // rate AFTER downsampling.
-     //========================================================
+    // DSP CHAIN (TD-001)
+    //
+    // Input -> InputStage -> Oversampling -> Overdrive -> Amp
+    // -> Downsampling -> Cabinet -> Delay -> Reverb -> Output
+    //========================================================
 
-     // INPUT STAGE (base rate)
+    // INPUT STAGE (base rate)
     if (inputStage != nullptr)
     {
         inputStage->process(buffer);
     }
-
-    // TD-010 GAIN MAP B — TEMPORARY DIAGNOSTIC — INPUT TAP — BEGIN
-    // Base-rate tap, immediately after InputStage, before upsampling.
-    float td010InputRmsDb = -120.0f;
-    float td010InputPeakDb = -120.0f;
-    td010ComputeRmsPeakDb(buffer, td010InputRmsDb, td010InputPeakDb);
-    // TD-010 GAIN MAP B — TEMPORARY DIAGNOSTIC — INPUT TAP — END
 
     juce::dsp::AudioBlock<float> block(buffer);
 
@@ -314,82 +280,11 @@ void SlashRingAudioProcessor::processBlock(
         overdriveModule->process(oversampledBlock);
     }
 
-    // TD-010 GAIN MAP B — TEMPORARY DIAGNOSTIC — OD TAP — BEGIN
-    // Oversampled-domain tap, immediately after OverdriveModule,
-    // before AmpModule. No domain equalization performed.
-    float td010OdRmsDb = -120.0f;
-    float td010OdPeakDb = -120.0f;
-    td010ComputeRmsPeakDb(oversampledBlock, td010OdRmsDb, td010OdPeakDb);
-    // TD-010 GAIN MAP B — TEMPORARY DIAGNOSTIC — OD TAP — END
-
     // AMP (oversampled domain)
     if (ampModule != nullptr)
     {
         ampModule->process(oversampledBlock);
     }
-
-    // TD-010 GAIN MAP B — TEMPORARY DIAGNOSTIC — AMP TAP — BEGIN
-    // Oversampled-domain tap, immediately after AmpModule,
-    // before downsampling. No domain equalization performed.
-    float td010AmpRmsDb = -120.0f;
-    float td010AmpPeakDb = -120.0f;
-    td010ComputeRmsPeakDb(oversampledBlock, td010AmpRmsDb, td010AmpPeakDb);
-    // TD-010 GAIN MAP B — TEMPORARY DIAGNOSTIC — AMP TAP — END
-
-    // TD-010 GAIN MAP B — TEMPORARY DIAGNOSTIC — PARAMETER-STATE + LOG — BEGIN
-    //
-    // AMP_GAIN_STATE / OD_DRIVE_STATE: current (non-advancing)
-    // SmoothedValue state read via the diagnostic getters added
-    // to AmpModule / OverdriveModule. Represents the smoother's
-    // state at this query point in this block only — not every
-    // sample-by-sample value consumed during the block.
-    //
-    // OD_REQUESTED_ON: mirrors the exact condition used in
-    // updateParameterState() to decide OverdriveModule routing
-    // (overdriveOn > 0.5f). This is the Processor's REQUESTED
-    // routing decision, NOT an internal OverdriveModule bypass
-    // state — OverdriveModule has no real bypass state (TD-005,
-    // open, unaddressed by this diagnostic).
-    //
-    // Throttled to ~2 log lines/sec so manual test-matrix
-    // capture stays readable.
-    //========================================================
-    td010DiagAccumSamples += static_cast<double>(buffer.getNumSamples());
-
-    const double td010LogIntervalSamples = currentSampleRate * 0.5;
-
-    if (td010DiagAccumSamples >= td010LogIntervalSamples)
-    {
-        td010DiagAccumSamples = 0.0;
-
-        const float td010AmpGainState =
-            (ampModule != nullptr)
-            ? ampModule->getCurrentGainValue()
-            : 0.0f;
-
-        const float td010OdDriveState =
-            (overdriveModule != nullptr)
-            ? overdriveModule->getCurrentDriveValue()
-            : 0.0f;
-
-        const bool td010OdRequestedOn =
-            apvts.getRawParameterValue(ParameterID::overdriveOn)->load() > 0.5f;
-
-        const juce::String td010LogLine =
-            juce::String("TD-010 GAIN MAP B | ")
-            + "AMP_GAIN_STATE: " + juce::String(td010AmpGainState, 3) + " | "
-            + "OD_REQUESTED_ON: " + juce::String(td010OdRequestedOn ? 1 : 0) + " | "
-            + "OD_DRIVE_STATE: " + juce::String(td010OdDriveState, 3) + " | "
-            + "INPUT RMS: " + juce::String(td010InputRmsDb, 2) + " dBFS | "
-            + "PEAK: " + juce::String(td010InputPeakDb, 2) + " dBFS || "
-            + "OD RMS: " + juce::String(td010OdRmsDb, 2) + " dBFS | "
-            + "PEAK: " + juce::String(td010OdPeakDb, 2) + " dBFS || "
-            + "AMP RMS: " + juce::String(td010AmpRmsDb, 2) + " dBFS | "
-            + "PEAK: " + juce::String(td010AmpPeakDb, 2) + " dBFS";
-
-        td010AppendDiagLogLine(td010LogLine);
-    }
-    // TD-010 GAIN MAP B — TEMPORARY DIAGNOSTIC — PARAMETER-STATE + LOG — END
 
     oversampling.processSamplesDown(block);
 
@@ -426,8 +321,8 @@ void SlashRingAudioProcessor::updateParameterState()
 {
 
     //========================================================
-   // INPUT STAGE
-  //========================================================
+    // INPUT STAGE
+    //========================================================
 
     if (inputStage != nullptr)
     {
@@ -445,6 +340,11 @@ void SlashRingAudioProcessor::updateParameterState()
 
     //========================================================
     // OVERDRIVE
+    //
+    // CORRECAO: o Tone agora e SEMPRE aplicado, ligado ou
+    // desligado. Antes o setTone() so era chamado com o
+    // overdrive DESLIGADO, entao o knob nao fazia nada
+    // com o overdrive LIGADO.
     //========================================================
 
     if (overdriveModule != nullptr)
@@ -460,30 +360,29 @@ void SlashRingAudioProcessor::updateParameterState()
         const auto overdriveLevel =
             apvts.getRawParameterValue(
                 ParameterID::overdriveLevel)->load();
-        
+
         const auto overdriveTone =
             apvts.getRawParameterValue(
                 ParameterID::overdriveTone)->load();
 
+        // Tone SEMPRE aplicado -> o knob sempre funciona.
+        overdriveModule->setTone(overdriveTone);
+
         if (overdriveEnabled > 0.5f)
         {
-            overdriveModule->setDrive(
-                overdriveDrive);
-
-            overdriveModule->setLevel(
-                overdriveLevel);
+            overdriveModule->setDrive(overdriveDrive);
+            overdriveModule->setLevel(overdriveLevel);
         }
         else
         {
             overdriveModule->setDrive(0.0f);
             overdriveModule->setLevel(0.0f);
-            overdriveModule->setTone(overdriveTone);
         }
     }
 
     //========================================================
-   // AMP
-  //========================================================
+    // AMP
+    //========================================================
 
     if (ampModule != nullptr)
     {
@@ -520,52 +419,52 @@ void SlashRingAudioProcessor::updateParameterState()
     }
 
     //========================================================
-   // CABINET
-  //========================================================
+    // CABINET
+    //========================================================
 
-   if (cabinetModule != nullptr)
-{
-    const auto enabled =
-    apvts.getRawParameterValue(
-    ParameterID::cabinetOn)->load();
+    if (cabinetModule != nullptr)
+    {
+        const auto enabled =
+            apvts.getRawParameterValue(
+                ParameterID::cabinetOn)->load();
 
+        const auto lowCut =
+            apvts.getRawParameterValue(
+                ParameterID::cabinetLowCut)->load();
 
-    const auto lowCut =
-    apvts.getRawParameterValue(
-    ParameterID::cabinetLowCut)->load();
+        const auto highCut =
+            apvts.getRawParameterValue(
+                ParameterID::cabinetHighCut)->load();
 
-    const auto highCut =
-    apvts.getRawParameterValue(
-    ParameterID::cabinetHighCut)->load();
+        const auto levelDb =
+            apvts.getRawParameterValue(
+                ParameterID::cabinetLevel)->load();
 
-    const auto levelDb =
-    apvts.getRawParameterValue(
-    ParameterID::cabinetLevel)->load();
+        const auto mix =
+            apvts.getRawParameterValue(
+                ParameterID::cabinetMix)->load();
 
-    const auto mix =
-    apvts.getRawParameterValue(
-    ParameterID::cabinetMix)->load();
-    cabinetModule->setEnabled(enabled > 0.5f);
-    // Voz A carrega a IR de fabrica; voz B fica muda
-    // (blend = 0). Low/High cut ajustam o timbre.
+        cabinetModule->setEnabled(enabled > 0.5f);
 
-    cabinetModule->configureVoice(
-    0, 0.0f, lowCut, highCut, 0.0f, 0.5f, 45.0f);
-    cabinetModule->configureVoice(
-    1, 0.0f, lowCut, highCut, 0.0f, 0.5f, 45.0f);
-    // blend 0 = 100% voz A. O +6 dB compensa a lei de
-    // pan (~0.5) do CabinetMixer, devolvendo o nivel a
-    // unidade. levelDb e o makeup do usuario.
+        // Voz A carrega a IR selecionada; voz B fica muda
+        // (blend = 0). Low/High cut ajustam o timbre.
+        cabinetModule->configureVoice(
+            0, 0.0f, lowCut, highCut, 0.0f, 0.5f, 45.0f);
+        cabinetModule->configureVoice(
+            1, 0.0f, lowCut, highCut, 0.0f, 0.5f, 45.0f);
 
-    cabinetModule->configureMixer(
-    0.0f, 0.0f, 0.0f, levelDb + 6.0f);
-    // Dry/wet do cabinet
-    cabinetModule->setMix(mix);
-}
+        // blend 0 = 100% voz A. O +6 dB compensa a lei de
+        // pan (~0.5) do CabinetMixer. levelDb e o makeup do usuario.
+        cabinetModule->configureMixer(
+            0.0f, 0.0f, 0.0f, levelDb + 6.0f);
+
+        // Dry/wet do cabinet
+        cabinetModule->setMix(mix);
+    }
 
     //========================================================
     // DELAY
-   //========================================================
+    //========================================================
 
     if (delayModule != nullptr)
     {
@@ -770,177 +669,117 @@ SlashRingAudioProcessor::createParameterLayout()
     //========================================================
 
     parameters.push_back(std::make_unique<Parameter>(
-        ParameterID::inputGain,
-        "Input Gain",
-        0.0f,
-        2.0f,
-        1.0f));
+        ParameterID::inputGain, "Input Gain", 0.0f, 2.0f, 1.0f));
 
     parameters.push_back(std::make_unique<Parameter>(
-        ParameterID::outputGain,
-        "Output Gain",
-        0.0f,
-        2.0f,
-        1.0f));
+        ParameterID::outputGain, "Output Gain", 0.0f, 2.0f, 1.0f));
 
     //========================================================
     // AMP
     //========================================================
 
     parameters.push_back(std::make_unique<Parameter>(
-        ParameterID::ampGain,
-        "Amp Gain",
-        0.0f,
-        10.0f,
-        5.0f));
+        ParameterID::ampGain, "Amp Gain", 0.0f, 10.0f, 5.0f));
 
     parameters.push_back(std::make_unique<Parameter>(
-        ParameterID::bass,
-        "Bass",
-        0.0f,
-        10.0f,
-        5.0f));
+        ParameterID::bass, "Bass", 0.0f, 10.0f, 5.0f));
 
     parameters.push_back(std::make_unique<Parameter>(
-        ParameterID::middle,
-        "Middle",
-        0.0f,
-        10.0f,
-        6.0f));
+        ParameterID::middle, "Middle", 0.0f, 10.0f, 6.0f));
 
     parameters.push_back(std::make_unique<Parameter>(
-        ParameterID::treble,
-        "Treble",
-        0.0f,
-        10.0f,
-        5.0f));
+        ParameterID::treble, "Treble", 0.0f, 10.0f, 5.0f));
 
     parameters.push_back(std::make_unique<Parameter>(
-        ParameterID::presence,
-        "Presence",
-        0.0f,
-        10.0f,
-        5.0f));
+        ParameterID::presence, "Presence", 0.0f, 10.0f, 5.0f));
 
     parameters.push_back(std::make_unique<Parameter>(
-        ParameterID::master,
-        "Master",
-        0.0f,
-        10.0f,
-        6.0f));
+        ParameterID::master, "Master", 0.0f, 10.0f, 6.0f));
 
     //========================================================
     // OVERDRIVE
     //========================================================
 
     parameters.push_back(std::make_unique<Toggle>(
-        ParameterID::overdriveOn,
-        "Overdrive On",
-        false));
+        ParameterID::overdriveOn, "Overdrive On", false));
 
     parameters.push_back(std::make_unique<Parameter>(
-        ParameterID::overdriveDrive,
-        "Overdrive Drive",
-        juce::NormalisableRange<float>(
-            0.0f,
-            100.0f,
-            0.01f),
-        35.0f));
+        ParameterID::overdriveDrive, "Overdrive Drive",
+        juce::NormalisableRange<float>(0.0f, 100.0f, 0.01f), 35.0f));
 
     parameters.push_back(std::make_unique<Parameter>(
-        ParameterID::overdriveLevel,
-        "Overdrive Level",
-        juce::NormalisableRange<float>(
-            -60.0f,
-            12.0f,
-            0.01f),
-        0.0f));
+        ParameterID::overdriveLevel, "Overdrive Level",
+        juce::NormalisableRange<float>(-60.0f, 12.0f, 0.01f), 0.0f));
 
     parameters.push_back(std::make_unique<Parameter>(
-        ParameterID::overdriveTone,
-        "Overdrive Tone",
-        juce::NormalisableRange<float>(
-             0.0f, 10.0f, 0.01f),
-             6.0f));
+        ParameterID::overdriveTone, "Overdrive Tone",
+        juce::NormalisableRange<float>(0.0f, 10.0f, 0.01f), 6.0f));
 
     //========================================================
-    // CAB / REVERB
+    // CABINET
     //========================================================
 
     parameters.push_back(std::make_unique<Toggle>(
-        ParameterID::cabinetOn,
-        "Cabinet On",
-        true));
+        ParameterID::cabinetOn, "Cabinet On", true));
+
+    // MENU DE CABINETS (troca de IR).
+    // A ORDEM E O NUMERO de nomes precisa bater com a tabela em
+    // loadCabinetIR() e com os itens do ComboBox no editor.
+    parameters.push_back(std::make_unique<Choice>(
+        ParameterID::cabinetModel,
+        "Cabinet",
+        juce::StringArray
+        {
+            "BD_CL_Telocastme",   // Slot 1
+            "Marshall Cab",     // Slot 2
+            "BD_HV_Creamback3_mixed",  // Slot 3 (troque pelo seu IR)
+            "BD_LD_HairApparently",  // Slot 4 (troque pelo seu IR)
+            "BD_RH_GatesOfHell",            // Slot 5 (troque pelo seu IR)
+            "Cab 6"             // Slot 6 (troque pelo seu IR)
+        },
+        0));
 
     parameters.push_back(std::make_unique<Parameter>(
-         ParameterID::cabinetLowCut,
-         "Cabinet Low Cut",
-    juce::NormalisableRange<float>(
-      20.0f, 300.0f, 1.0f, 0.5f),
-      80.0f));
+        ParameterID::cabinetLowCut, "Cabinet Low Cut",
+        juce::NormalisableRange<float>(20.0f, 300.0f, 1.0f, 0.5f), 80.0f));
 
     parameters.push_back(std::make_unique<Parameter>(
-         ParameterID::cabinetHighCut,
-         "Cabinet High Cut",
-    juce::NormalisableRange<float>(
-       2000.0f, 20000.0f, 1.0f, 0.5f),
-       12000.0f));
+        ParameterID::cabinetHighCut, "Cabinet High Cut",
+        juce::NormalisableRange<float>(2000.0f, 20000.0f, 1.0f, 0.5f), 12000.0f));
 
     parameters.push_back(std::make_unique<Parameter>(
-         ParameterID::cabinetLevel,
-         "Cabinet Level",
-    juce::NormalisableRange<float>(
-       -24.0f, 24.0f, 0.1f),
-        0.0f));
+        ParameterID::cabinetLevel, "Cabinet Level",
+        juce::NormalisableRange<float>(-24.0f, 24.0f, 0.1f), 0.0f));
 
     parameters.push_back(std::make_unique<Parameter>(
-         ParameterID::cabinetMix,
-         "Cabinet Mix",
-    juce::NormalisableRange<float>(
-        0.0f, 1.0f, 0.01f),
-        1.0f));
+        ParameterID::cabinetMix, "Cabinet Mix",
+        juce::NormalisableRange<float>(0.0f, 1.0f, 0.01f), 1.0f));
+
+    //========================================================
+    // REVERB
+    //========================================================
 
     parameters.push_back(std::make_unique<Toggle>(
-        ParameterID::reverbOn,
-        "Reverb On",
-        false));
+        ParameterID::reverbOn, "Reverb On", false));
 
     parameters.push_back(std::make_unique<Parameter>(
-        ParameterID::reverbMix,
-        "Reverb Mix",
-        0.0f,
-        1.0f,
-        0.15f));
+        ParameterID::reverbMix, "Reverb Mix", 0.0f, 1.0f, 0.15f));
 
     //========================================================
     // DELAY
     //========================================================
 
     parameters.push_back(std::make_unique<Toggle>(
-        ParameterID::delayOn,
-        "Delay On",
-        false));
+        ParameterID::delayOn, "Delay On", false));
 
     parameters.push_back(std::make_unique<Parameter>(
-        ParameterID::delayTime,
-        "Delay Time",
-        1.0f,
-        2000.0f,
-        380.0f));
+        ParameterID::delayTime, "Delay Time", 1.0f, 2000.0f, 380.0f));
 
     parameters.push_back(std::make_unique<Parameter>(
-        ParameterID::delayFeedback,
-        "Delay Feedback",
-        0.0f,
-        0.95f,
-        0.35f));
+        ParameterID::delayFeedback, "Delay Feedback", 0.0f, 0.95f, 0.35f));
 
     parameters.push_back(std::make_unique<Parameter>(
-        ParameterID::delayMix,
-        "Delay Mix",
-        0.0f,
-        1.0f,
-        0.20f));
+        ParameterID::delayMix, "Delay Mix", 0.0f, 1.0f, 0.20f));
 
     //========================================================
     // INPUT TYPE
@@ -957,7 +796,6 @@ SlashRingAudioProcessor::createParameterLayout()
             "Humbucker Modern",
             "Active"
         },
-
         2));
 
     return { parameters.begin(), parameters.end() };

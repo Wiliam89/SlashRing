@@ -64,6 +64,7 @@ private:
  Knob master { "MASTER" };
 
  juce::ToggleButton cabinetButton { "CABINET" };
+ juce::ComboBox cabinetModelBox;          // NOVO: menu de cabinets
  Knob cabLowCut { "LOW CUT" };
  Knob cabHighCut { "HIGH CUT" };
  Knob cabLevel { "LEVEL" };
@@ -81,8 +82,9 @@ private:
  using SliderAtt = juce::AudioProcessorValueTreeState::SliderAttachment;
  using ButtonAtt = juce::AudioProcessorValueTreeState::ButtonAttachment;
  using ComboAtt = juce::AudioProcessorValueTreeState::ComboBoxAttachment;
- 
+
  std::unique_ptr<ComboAtt> inputTypeAtt;
+ std::unique_ptr<ComboAtt> cabinetModelAtt;   // NOVO: menu de cabinets
  std::unique_ptr<SliderAtt> inputGainAtt, outputGainAtt;
  std::unique_ptr<SliderAtt> odDriveAtt, odLevelAtt, odToneAtt;
  std::unique_ptr<SliderAtt> ampGainAtt, bassAtt, midAtt, trebleAtt, presenceAtt, masterAtt;

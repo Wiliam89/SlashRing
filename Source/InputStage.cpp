@@ -34,6 +34,10 @@ void InputStage::prepare(double sampleRate,
             20.0f
         );
 
+        voicingFilter.reset();
+        voicingFilter.prepare(spec);
+        updateVoicingFilter();
+
     reset();
 }
 
@@ -62,6 +66,7 @@ void InputStage::process(juce::AudioBuffer<float>& buffer)
     juce::dsp::AudioBlock<float> block(buffer);
     juce::dsp::ProcessContextReplacing<float> context(block);
     highPassFilter.process(context);
+    voicingFilter.process(context);
 
     //========================================================
     // GAIN + VOICING
@@ -113,6 +118,8 @@ void InputStage::setInputType(int newType)
 
     calibrationGain =
         getPickupCalibration();
+
+    updateVoicingFilter();
 }
 
 float InputStage::applyInputVoicing(float x) noexcept
@@ -169,4 +176,24 @@ float InputStage::getPickupCalibration() const noexcept
     default:
         return 1.0f;
     }
+}
+
+void InputStage::updateVoicingFilter()
+{
+
+float freq = 3000.0f, gainDb = 0.0f, q = 0.7f;
+switch (inputType)
+{
+  case PickupType::SingleCoil: freq = 4500.0f; gainDb = +2.5f; break;
+  case PickupType::P90: freq = 1200.0f; gainDb = +2.0f; break;
+  case PickupType::HumbuckerVintage: freq = 3000.0f; gainDb = -1.0f; break;
+  case PickupType::HumbuckerModern: freq = 2000.0f; gainDb = +2.0f; break;
+  case PickupType::Active: freq = 5000.0f; gainDb = +1.0f; break;
+  default: break;
+}
+
+*voicingFilter.state =
+    *juce::dsp::IIR::Coefficients<float>::makePeakFilter(
+         currentSampleRate, freq, q,
+         juce::Decibels::decibelsToGain(gainDb));
 }
