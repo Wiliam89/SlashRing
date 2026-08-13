@@ -20,14 +20,32 @@ namespace BinaryData
     extern const char*   BD_RH_GatesOfHell_wav;
     const int            BD_RH_GatesOfHell_wavSize = 41147;
 
+    extern const char*   Marshall21960G12M25R121_wav;
+    const int            Marshall21960G12M25R121_wavSize = 66194;
+
+    extern const char*   Marshall34x12sm576in0c_wav;
+    const int            Marshall34x12sm576in0c_wavSize = 66516;
+
+    extern const char*   Marshall44x12i55in1_5c_wav;
+    const int            Marshall44x12i55in1_5c_wavSize = 83892;
+
     extern const char*   Marshall_Creamback_wav;
     const int            Marshall_Creamback_wavSize = 54804;
 
+    extern const char*   Marshall1960G12M25SM57_wav;
+    const int            Marshall1960G12M25SM57_wavSize = 66194;
+
+    extern const char*   Metal1_wav;
+    const int            Metal1_wavSize = 28880;
+
+    extern const char*   Metal2_wav;
+    const int            Metal2_wavSize = 28880;
+
     extern const char*   marshall_cab_wav;
-    const int            marshall_cab_wavSize = 17784;
+    const int            marshall_cab_wavSize = 54804;
 
     // Number of elements in the namedResourceList and originalFileNames arrays.
-    const int namedResourceListSize = 6;
+    const int namedResourceListSize = 12;
 
     // Points to the start of a list of resource names.
     extern const char* namedResourceList[];

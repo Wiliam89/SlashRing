@@ -217,12 +217,12 @@ void SlashRingAudioProcessor::loadCabinetIR(int modelIndex)
 
     static const CabIR table[kNumCabinets] =
     {
-        { BinaryData::BD_CL_Telocastme_wav, BinaryData::BD_CL_Telocastme_wavSize, "cab0_BD_CL_Telocastme"    }, // Slot 1
-        { BinaryData::marshall_cab_wav,       BinaryData::marshall_cab_wavSize,        "cab1_marshallcab" }, // Slot 2
-        { BinaryData::BD_HV_Creamback3_mixed_wav, BinaryData::BD_HV_Creamback3_mixed_wavSize,  "cab2_BD_HV_Creamback3"}, // Slot 3
-        { BinaryData::BD_LD_HairApparently_wav, BinaryData::BD_LD_HairApparently_wavSize, "cab3_BD_LD_HairApparently"}, // Slot 4  <- troque
-        { BinaryData::BD_RH_GatesOfHell_wav, BinaryData::BD_RH_GatesOfHell_wavSize, "cab4_BD_RH_GatesOfHell"       }, // Slot 5  <- troque
-        { BinaryData::Marshall_Creamback_wav, BinaryData::Marshall_Creamback_wavSize, "cab5_troque"       }, // Slot 6  <- troque
+        { BinaryData::Metal1_wav, BinaryData::Metal1_wavSize, "cab0_Metal1" }, // Slot 1
+        { BinaryData::Metal2_wav, BinaryData::Metal2_wavSize,  "cab1_Metal2" }, // Slot 2
+        { BinaryData::Marshall1960G12M25SM57_wav, BinaryData::Marshall1960G12M25SM57_wavSize,  "cab2_Marshall1960"}, // Slot 3
+        { BinaryData::Marshall21960G12M25R121_wav, BinaryData::Marshall21960G12M25R121_wavSize, "cab3_Marshall21960"}, // Slot 4  <- troque
+        { BinaryData::Marshall34x12sm576in0c_wav, BinaryData::Marshall34x12sm576in0c_wavSize, "cab4_Marshall34x12"}, // Slot 5  <- troque
+        { BinaryData::Marshall44x12i55in1_5c_wav, BinaryData::Marshall44x12i55in1_5c_wavSize, "cab5_Marshall44x12"}, // Slot 6  <- troque
     };
 
     const int idx = juce::jlimit(0, kNumCabinets - 1, modelIndex);
@@ -730,12 +730,12 @@ SlashRingAudioProcessor::createParameterLayout()
         "Cabinet",
         juce::StringArray
         {
-            "BD_CL_Telocastme",   // Slot 1
-            "Marshall Cab",     // Slot 2
-            "BD_HV_Creamback3_mixed",  // Slot 3 (troque pelo seu IR)
-            "BD_LD_HairApparently",  // Slot 4 (troque pelo seu IR)
-            "BD_RH_GatesOfHell",            // Slot 5 (troque pelo seu IR)
-            "Cab 6"             // Slot 6 (troque pelo seu IR)
+            "Metal1",   // Slot 1
+            "Metal2",     // Slot 2
+            "Marshall1960",  // Slot 3 (troque pelo seu IR)
+            "Marshall21960",  // Slot 4 (troque pelo seu IR)
+            "Marshall34x12",   // Slot 5 (troque pelo seu IR)
+            "Marshall44x12"  // Slot 6 (troque pelo seu IR)
         },
         0));
 

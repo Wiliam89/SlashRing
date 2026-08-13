@@ -127,12 +127,12 @@ SlashRingAudioProcessorEditor::SlashRingAudioProcessorEditor (SlashRingAudioProc
 
  // Menu de cabinets (IDs 1..6 = indices 0..5 do parametro cabinet_model).
  // A ORDEM E OS NOMES precisam bater com a lista em createParameterLayout().
- cabinetModelBox.addItem ("BD_CL_Telocastme", 1);
- cabinetModelBox.addItem ("Marshall Cab", 2);
- cabinetModelBox.addItem ("BD_HV_Creamback3_mixed", 3);
- cabinetModelBox.addItem ("BD_LD_HairApparently", 4);
- cabinetModelBox.addItem ("BD_RH_GatesOfHell", 5);
- cabinetModelBox.addItem ("Cab 6", 6);
+ cabinetModelBox.addItem ("Metal1", 1);
+ cabinetModelBox.addItem ("Metal2", 2);
+ cabinetModelBox.addItem ("Marshall1960", 3);
+ cabinetModelBox.addItem ("Marshall21960", 4);
+ cabinetModelBox.addItem ("Marshall34x12", 5);
+ cabinetModelBox.addItem ("Marshall44x12", 6);
  addAndMakeVisible (cabinetModelBox);
 
  for (auto* k : { &inputGain, &outputGain, &odDrive, &odLevel, &odTone, &ampGain, &bass,
@@ -140,6 +140,8 @@ SlashRingAudioProcessorEditor::SlashRingAudioProcessorEditor (SlashRingAudioProc
  addAndMakeVisible (*k);
  for (auto* btn : { &overdriveButton, &cabinetButton, &delayButton, &reverbButton })
  addAndMakeVisible (*btn);
+
+
 
  // Attachments
  auto& s = processor.getAPVTS();
@@ -200,6 +202,11 @@ void SlashRingAudioProcessorEditor::paint (juce::Graphics& g)
  g.setColour (juce::Colour (0xff4A443C));
  g.fillRect (14, 72, getWidth() - 28, 1);
 
+// titulo de secao sempre dentro do retangulo do cabecalho da secao:
+auto head = sec.bounds.removeFromTop (24).reduced (12, 0);
+g.setColour (juce::Colour (0xffE0A24A));
+g.setFont (juce::Font (12.0f, juce::Font::bold));
+g.drawText (sec.title, head, juce::Justification::centredLeft, false);
 
  // paineis das secoes
  for (auto& sec : sections)
@@ -215,7 +222,121 @@ void SlashRingAudioProcessorEditor::paint (juce::Graphics& g)
  g.setFont (hf);
  g.drawText (sec.title, head.reduced (12, 0), juce::Justification::centredLeft, false);
  }
+
+auto b = ampArea.reduced (12).toFloat(); // area do amp com uma folga
+juce::ColourGradient plate (juce::Colour (0xffD8B264), b.getX(), b.getY(),
+ juce::Colour (0xff7C5C28), b.getX(), b.getBottom(),
+ false);
+g.setGradientFill (plate);
+g.fillRoundedRectangle (b, 6.0f);
+
+ // faixa logo abaixo do cabecalho, com 24 px de margem nas laterais
+drawSignalChain (g, juce::Rectangle<int> (24, 88, getWidth() - 48, 24));
+
 }
+
+// dentro do paint(), usando a area da secao (ex.: odArea):
+auto pedal = odArea.reduced (14).withTrimmedTop (24).toFloat();
+g.setColour (juce::Colour (0xff241f18));
+g.fillRoundedRectangle (pedal, 8.0f);
+g.setColour (juce::Colour (0xff4A4038));
+g.drawRoundedRectangle (pedal, 8.0f, 1.0f);
+// footswitch (circulo) na base do pedal:
+auto cx = pedal.getCentreX();
+auto cy = pedal.getBottom() - 20.0f;
+g.setColour (juce::Colour (0xff15110d));
+g.fillEllipse (cx - 12, cy - 12, 24, 24);
+g.setColour (juce::Colour (0xffE0A24A));
+g.drawEllipse (cx - 12, cy - 12, 24, 24, 2.0f);
+
+void SlashRingAudioProcessorEditor::drawSignalChain (juce::Graphics& g,
+ juce::Rectangle<int> area)
+{
+ const juce::StringArray names { "INPUT","OVERDRIVE","AMPLIFIER",
+ "CABINET","DELAY","REVERB","OUTPUT" };
+ const int n = names.size(); // 7 caixinhas
+ const int gap = 12; // espaco entre elas
+ const int h = 24;
+ // >>> o segredo: largura total, menos os espacos, dividida por 7
+ const int w = (area.getWidth() - gap * (n - 1)) / n;
+ int x = area.getX();
+ const int y = area.getCentreY() - h / 2;
+ for (int i = 0; i < n; ++i)
+ {
+ auto chip = juce::Rectangle<int> (x, y, w, h).toFloat();
+ g.setColour (juce::Colour (0xff211c16));
+ g.fillRoundedRectangle (chip, 12.0f);
+ g.setColour (juce::Colour (0xffE0A24A));
+ g.drawRoundedRectangle (chip, 12.0f, 1.2f);
+ g.setColour (juce::Colour (0xffEDE7DD));
+ g.setFont (juce::Font (11.0f, juce::Font::bold));
+ g.drawText (names[i], chip.toNearestInt(),
+ juce::Justification::centred, false);
+ x += w + gap; // anda para a proxima
+ }
+
+auto grille = juce::Rectangle<float> (gx, gy, 196, 150); // ajuste gx, gy
+g.setColour (juce::Colour (0xff0f0c09));
+g.fillRoundedRectangle (grille, 6.0f);
+g.setColour (juce::Colour (0xff9C6F28));
+g.drawRoundedRectangle (grille, 6.0f, 1.0f);
+for (int r = 0; r < 2; ++r)
+ for (int cN = 0; cN < 2; ++cN)
+ {
+ float scx = grille.getX() + grille.getWidth() * (0.28f + 0.44f*cN);
+ float scy = grille.getY() + grille.getHeight() * (0.28f + 0.44f*r);
+ g.setColour (juce::Colour (0xff0a0806));
+ g.fillEllipse (scx - 30, scy - 30, 60, 60);
+ g.setColour (juce::Colour (0xff2a241d));
+ g.drawEllipse (scx - 30, scy - 30, 60, 60, 2.0f);
+ }
+
+}
+
+void SlashRingAudioProcessorEditor::setParam (const juce::String& id, float value)
+{
+ if (auto* p = processor.getAPVTS().getParameter (id))
+ p->setValueNotifyingHost (p->convertTo0to1 (value));
+}
+
+void SlashRingAudioProcessorEditor::applyPreset
+ (const std::map<juce::String, float>& values)
+{
+ for (const auto& kv : values) // kv.first = nome, kv.second = valor
+ setParam (kv.first, kv.second);
+}
+
+struct Preset { juce::String name; std::map<juce::String, float> values; };
+const std::vector<Preset> factoryPresets =
+{
+ { "Appetite Lead", {
+ { ParameterID::ampGain, 8.0f }, { ParameterID::master, 6.0f },
+ { ParameterID::bass, 6.0f }, { ParameterID::middle, 5.5f },
+ { ParameterID::treble, 6.5f }, { ParameterID::presence, 5.0f },
+ { ParameterID::overdriveOn, 1.0f }, { ParameterID::cabinetModel, 0.0f },
+ { ParameterID::delayOn, 0.0f }, { ParameterID::reverbMix, 0.20f } } },
+ { "Rhythm Crunch", {
+ { ParameterID::ampGain, 5.5f }, { ParameterID::master, 6.0f },
+ { ParameterID::bass, 6.5f }, { ParameterID::middle, 6.0f },
+ { ParameterID::treble, 5.5f }, { ParameterID::cabinetModel, 4.0f },
+ { ParameterID::delayOn, 0.0f }, { ParameterID::reverbMix, 0.10f } } },
+ { "Clean Warm", {
+ { ParameterID::ampGain, 2.0f }, { ParameterID::master, 6.5f },
+ { ParameterID::overdriveOn, 0.0f }, { ParameterID::cabinetModel, 0.0f },
+ { ParameterID::reverbMix, 0.30f } } },
+};
+
+// 1) preencher o menu com os nomes (IDs comecam em 1):
+for (int i = 0; i < (int) factoryPresets.size(); ++i)
+ presetBox.addItem (factoryPresets[i].name, i + 1);
+addAndMakeVisible (presetBox);
+// 2) quando o usuario escolher, aplicar aquele preset:
+presetBox.onChange = [this]
+{
+ const int idx = presetBox.getSelectedId() - 1; // volta para 0,1,2...
+ if (idx >= 0 && idx < (int) factoryPresets.size())
+ applyPreset (factoryPresets[idx].values);
+};
 
 //====================================================================
 // RESIZED — layout por retangulos

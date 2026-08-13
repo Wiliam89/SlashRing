@@ -4844,7 +4844,13 @@
     <None Include="..\..\Resources\BD_HV_Creamback3_mixed.wav"/>
     <None Include="..\..\Resources\BD_LD_HairApparently.wav"/>
     <None Include="..\..\Resources\BD_RH_GatesOfHell.wav"/>
+    <None Include="..\..\Resources\Marshall-2-1960-G12M25-R121.wav"/>
+    <None Include="..\..\Resources\Marshall-3-4x12-sm57-6in-0c.wav"/>
+    <None Include="..\..\Resources\Marshall-4-4x12-i5-5in-1.5c.wav"/>
     <None Include="..\..\Resources\Marshall_Creamback.wav"/>
+    <None Include="..\..\Resources\Marshall1960-G12M25-SM57.wav"/>
+    <None Include="..\..\Resources\Metal-1.wav"/>
+    <None Include="..\..\Resources\Metal-2.wav"/>
     <None Include="..\..\..\..\IR\AMP_IR\6505-6L6 PWR AMP\marshall_cab.wav"/>
     <None Include="..\..\..\..\JUCE\modules\juce_audio_devices\native\oboe\src\common\README.md"/>
     <None Include="..\..\..\..\JUCE\modules\juce_audio_devices\native\oboe\src\flowgraph\resampler\README.md"/>

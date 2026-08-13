@@ -12,6 +12,8 @@ public:
  void drawRotarySlider (juce::Graphics&, int x, int y, int width, int height,
  float sliderPos, float startAngle, float endAngle,
 
+ void drawSignalChain (juce::Graphics& g, juce::Rectangle<int> area);
+
  juce::Slider&) override;
  void drawToggleButton (juce::Graphics&, juce::ToggleButton&,
  bool shouldDrawButtonAsHighlighted,

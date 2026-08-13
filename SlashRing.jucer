@@ -12,8 +12,18 @@
             file="Resources/BD_LD_HairApparently.wav"/>
       <FILE id="NRe6Gr" name="BD_RH_GatesOfHell.wav" compile="0" resource="1"
             file="Resources/BD_RH_GatesOfHell.wav"/>
+      <FILE id="TT8mof" name="Marshall-2-1960-G12M25-R121.wav" compile="0"
+            resource="1" file="Resources/Marshall-2-1960-G12M25-R121.wav"/>
+      <FILE id="wGCTbL" name="Marshall-3-4x12-sm57-6in-0c.wav" compile="0"
+            resource="1" file="Resources/Marshall-3-4x12-sm57-6in-0c.wav"/>
+      <FILE id="zswka8" name="Marshall-4-4x12-i5-5in-1.5c.wav" compile="0"
+            resource="1" file="Resources/Marshall-4-4x12-i5-5in-1.5c.wav"/>
       <FILE id="URd8dm" name="Marshall_Creamback.wav" compile="0" resource="1"
             file="Resources/Marshall_Creamback.wav"/>
+      <FILE id="QLljdP" name="Marshall1960-G12M25-SM57.wav" compile="0" resource="1"
+            file="Resources/Marshall1960-G12M25-SM57.wav"/>
+      <FILE id="c3Gck8" name="Metal-1.wav" compile="0" resource="1" file="Resources/Metal-1.wav"/>
+      <FILE id="mqfEKU" name="Metal-2.wav" compile="0" resource="1" file="Resources/Metal-2.wav"/>
     </GROUP>
     <GROUP id="{A56AD2A5-9A4A-ED13-3B24-DF034FF62311}" name="Source">
       <FILE id="wZ6OZs" name="CabinetDataTypes.h" compile="0" resource="0"
